@@ -1,0 +1,54 @@
+import { apiGet, apiPost, apiDelete } from './api';
+
+export type AIHistoryMessage = {
+  role: 'user' | 'ai';
+  text: string;
+};
+
+export type AISession = {
+  id: string;
+  user_id: number;
+  title: string;
+  preview: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AISessionMessage = {
+  id: number;
+  session_id: string;
+  role: 'user' | 'ai';
+  text: string;
+  created_at: string;
+};
+
+export async function sendAIMessage(
+  message: string,
+  history: AIHistoryMessage[] = [],
+  sessionId?: string | null,
+  coords?: {lat: number, lng: number} | null
+) {
+  return apiPost<{ response: string }>('/ai/chat', {
+    message,
+    history,
+    session_id: sessionId ?? null,
+    lat: coords?.lat ?? null,
+    lng: coords?.lng ?? null,
+  }, false);
+}
+
+export async function getAISessions() {
+  return apiGet<AISession[]>('/ai/sessions', true);
+}
+
+export async function createAISession(title: string) {
+  return apiPost<AISession>('/ai/sessions', { title }, true);
+}
+
+export async function getAISessionMessages(sessionId: string) {
+  return apiGet<AISessionMessage[]>(`/ai/sessions/${sessionId}/messages`, true);
+}
+
+export async function deleteAISession(sessionId: string) {
+  return apiDelete(`/ai/sessions/${sessionId}`, true);
+}
