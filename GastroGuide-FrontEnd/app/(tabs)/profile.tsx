@@ -3,6 +3,7 @@ import { router, useFocusEffect } from 'expo-router';
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   Alert,
+  Image,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -17,6 +18,7 @@ import { getFavorites } from '../../services/favorites';
 import { getProfileMe, getProfileStats, Profile, ProfileStats } from '../../services/profile';
 import { Restaurant } from '../../services/restaurants';
 import { authService } from '../../services/auth';
+import { getRestaurantImage } from '../../utils/restaurantImages';
 
 const C = {
   bg: '#FDF8F2', dark: '#1A1208', accent: '#E8420A',
@@ -190,9 +192,7 @@ export default function ProfileScreen() {
                 activeOpacity={0.8}
                 onPress={() => router.push({ pathname: '/detail', params: { id: r.id } })}
               >
-                <View style={[s.cardIcon, { backgroundColor: r.color + '18' }]}>
-                  <Ionicons name="restaurant" size={22} color={r.color} />
-                </View>
+                <Image source={getRestaurantImage(r.id)} style={s.cardImage} />
                 <View style={{ flex: 1 }}>
                   <Text style={s.cardName}>{r.name}</Text>
                   <Text style={s.cardSub}>{r.type} · ⭐ {r.rating} · {r.dist}</Text>
@@ -299,7 +299,7 @@ const s = StyleSheet.create({
   sectionTitle: { fontSize: 10, fontWeight: '700', color: C.dark, letterSpacing: 1, marginBottom: 10 },
   sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   card: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 16, marginBottom: 8 },
-  cardIcon: { width: 46, height: 46, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  cardImage: { width: 46, height: 46, borderRadius: 13, flexShrink: 0 },
   cardName: { fontSize: 14, fontWeight: '700', color: C.dark },
   cardSub: { fontSize: 11, color: C.muted, marginTop: 2 },
   emptyBox: { backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 16, padding: 16 },

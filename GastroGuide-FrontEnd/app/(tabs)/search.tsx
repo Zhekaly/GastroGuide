@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
+  Image,
   SafeAreaView, StatusBar,
   StyleSheet,
   Text,
@@ -13,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { getCategories, getRestaurants, searchRestaurants, Restaurant, Category } from '../../services/restaurants';
 import * as Location from 'expo-location';
+import { getRestaurantImage } from '../../utils/restaurantImages';
 
 
 const CATEGORY_ICONS: Record<string, React.ComponentProps<typeof Ionicons>['name']> = {
@@ -260,9 +262,7 @@ export default function SearchScreen() {
             onPress={() => router.push({ pathname: '/detail', params: { id: r.id } })}
             activeOpacity={0.8}
           >
-            <View style={[s.cardIcon, { backgroundColor: r.color + '18', borderColor: r.color + '35' }]}>
-              <Ionicons name="restaurant" size={24} color={r.color} />
-            </View>
+            <Image source={getRestaurantImage(r.id)} style={s.cardImage} />
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Text style={s.cardName}>{r.name}</Text>
@@ -338,7 +338,7 @@ const s = StyleSheet.create({
   list: { padding: 20, gap: 8, paddingBottom: 100 },
   resultCount: { fontSize: 10, color: C.muted, fontWeight: '600', letterSpacing: 1, marginBottom: 10 },
   card: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, padding: 13, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 16, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
-  cardIcon: { width: 52, height: 52, borderRadius: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 1, flexShrink: 0 },
+  cardImage: { width: 52, height: 52, borderRadius: 15, flexShrink: 0 },
   cardName: { fontSize: 14, fontWeight: '700', color: C.dark, flex: 1, marginRight: 8 },
   cardSub: { fontSize: 11, color: C.muted, marginTop: 2 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },

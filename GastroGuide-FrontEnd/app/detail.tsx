@@ -28,6 +28,7 @@ import {
   updateReview,
 } from '../services/reviews';
 import { getProfileMe } from '../services/profile';
+import { getRestaurantImage } from '../utils/restaurantImages';
 
 const C = {
   bg: '#FDF8F2',
@@ -86,9 +87,9 @@ export default function DetailScreen() {
     outputRange: [1.3, 1],
     extrapolate: 'clamp',
   });
-  const heroOpacity = scrollY.interpolate({
-    inputRange: [0, 120],
-    outputRange: [1, 0],
+  const heroTranslateY = scrollY.interpolate({
+    inputRange: [0, 220],
+    outputRange: [0, -24],
     extrapolate: 'clamp',
   });
   const insets = useSafeAreaInsets();
@@ -339,18 +340,17 @@ export default function DetailScreen() {
       <StatusBar barStyle="dark-content" backgroundColor={`${r.color}18`} />
 
       <Animated.View style={[s.hero, { backgroundColor: r.color + '18' }]}>
-        <Animated.View
+        <Animated.Image
+          source={getRestaurantImage(r.id)}
           style={[
-            s.heroIconWrap,
+            s.heroImage,
             {
-              transform: [{ scale: heroScale }],
-              opacity: heroOpacity,
-              backgroundColor: r.color + '25',
+              transform: [{ translateY: heroTranslateY }, { scale: heroScale }],
             },
           ]}
-        >
-          <Ionicons name="restaurant" size={72} color={r.color} />
-        </Animated.View>
+          resizeMode="cover"
+        />
+        <View style={s.heroOverlay} />
 
         <TouchableOpacity style={[s.backBtn, { top: insets.top + 12 }]} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={20} color={C.dark} />
@@ -648,8 +648,21 @@ export default function DetailScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
-  hero: { height: 220, alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  heroIconWrap: { width: 120, height: 120, borderRadius: 60, alignItems: 'center', justifyContent: 'center' },
+  hero: {
+    height: 280,
+    position: 'relative',
+    overflow: 'hidden',
+    backgroundColor: '#EDE5D8',
+  },
+  heroImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(26, 18, 8, 0.12)',
+  },
   backBtn: {
     position: 'absolute',
     left: 16,

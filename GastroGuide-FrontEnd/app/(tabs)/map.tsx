@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
+  Image,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -20,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import WebView from 'react-native-webview';
 import { getRestaurants, Restaurant } from '../../services/restaurants';
 import { getRoute } from '../../services/routes';
+import { getRestaurantImage } from '../../utils/restaurantImages';
 
 const { height: SH } = Dimensions.get('window');
 const MAP_H = SH * 0.55;
@@ -372,9 +374,7 @@ export default function MapScreen() {
               onPress={() => router.push({ pathname: '/detail', params: { id: selected.id } })}
               activeOpacity={0.9}
             >
-              <View style={[s.selectedIcon, { backgroundColor: selected.color + '18' }]}>
-                <Ionicons name="restaurant" size={26} color={selected.color} />
-              </View>
+              <Image source={getRestaurantImage(selected.id)} style={s.selectedImage} />
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={s.selectedName}>{selected.name}</Text>
@@ -444,9 +444,7 @@ export default function MapScreen() {
                   }}
                   activeOpacity={0.8}
                 >
-                  <View style={[s.miniIcon, { backgroundColor: r.color + '18' }]}>
-                    <Ionicons name="restaurant" size={22} color={r.color} />
-                  </View>
+                  <Image source={getRestaurantImage(r.id)} style={s.miniImage} />
                   <Text style={s.miniName} numberOfLines={1}>
                     {r.name}
                   </Text>
@@ -516,7 +514,7 @@ const s = StyleSheet.create({
   sheetTitle: { fontSize: 10, fontWeight: '700', color: C.muted, letterSpacing: 1, paddingHorizontal: 20, marginBottom: 10 },
   sheetRow: { paddingHorizontal: 20, gap: 10 },
   miniCard: { width: 88, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 14, padding: 10, alignItems: 'center', alignSelf: 'flex-start' },
-  miniIcon: { width: 42, height: 42, borderRadius: 13, alignItems: 'center', justifyContent: 'center', marginBottom: 5 },
+  miniImage: { width: 42, height: 42, borderRadius: 13, marginBottom: 5 },
   miniName: { fontSize: 10, fontWeight: '700', color: C.dark, textAlign: 'center', lineHeight: 13, marginBottom: 2 },
   miniDist: { fontSize: 9, color: C.muted },
   miniRating: { fontSize: 10, fontWeight: '700', marginTop: 2 },
@@ -527,7 +525,7 @@ const s = StyleSheet.create({
   routeInfo: { marginLeft: 'auto' as any, backgroundColor: C.accent + '12', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
   routeInfoText: { fontSize: 11, color: C.accent, fontWeight: '700' },
   selectedCard: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, padding: 14, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 18 },
-  selectedIcon: { width: 54, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  selectedImage: { width: 54, height: 54, borderRadius: 16 },
   selectedName: { fontSize: 15, fontWeight: '800', color: C.dark, marginBottom: 2 },
   selectedSub: { fontSize: 11, color: C.muted },
   selectedMeta: { fontSize: 10, color: C.muted },

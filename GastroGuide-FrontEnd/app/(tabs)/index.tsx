@@ -1,6 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import React, { useEffect, useState, useCallback } from 'react';
 import {
+  Image,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -13,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { getCategories, getRestaurants, Restaurant, Category } from '../../services/restaurants';
 import { getOffers, Offer } from '../../services/offers';
+import { getRestaurantImage } from '../../utils/restaurantImages';
 
 const C = {
   bg: '#FDF8F2', dark: '#1A1208', accent: '#E8420A',
@@ -249,9 +251,7 @@ export default function HomeScreen() {
                 onPress={() => router.push({ pathname: '/detail', params: { id: r.id } })}
                 activeOpacity={0.8}
               >
-                <View style={[s.featIcon, { backgroundColor: r.color + '18' }]}>
-                  <Ionicons name="restaurant" size={36} color={r.color} />
-                </View>
+                <Image source={getRestaurantImage(r.id)} style={s.featImage} />
                 <View style={[s.featBadge, { backgroundColor: r.color + '18', borderColor: r.color + '35' }]}>
                   <Text style={[s.featBadgeText, { color: r.color }]}>{r.tag}</Text>
                 </View>
@@ -300,9 +300,7 @@ export default function HomeScreen() {
               onPress={() => router.push({ pathname: '/detail', params: { id: r.id } })}
               activeOpacity={0.8}
             >
-              <View style={[s.cardIcon, { backgroundColor: r.color + '18', borderColor: r.color + '35' }]}>
-                <Ionicons name="restaurant" size={24} color={r.color} />
-              </View>
+              <Image source={getRestaurantImage(r.id)} style={s.cardImage} />
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Text style={s.cardName}>{r.name}</Text>
@@ -401,7 +399,7 @@ const s = StyleSheet.create({
     width: 140, backgroundColor: '#fff',
     borderWidth: 1.5, borderColor: C.border, borderRadius: 18, padding: 12,
   },
-  featIcon: { width: '100%', height: 80, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  featImage: { width: '100%', height: 80, borderRadius: 12, marginBottom: 8 },
   featBadge: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start', marginBottom: 6 },
   featBadgeText: { fontSize: 9, fontWeight: '800' },
   featName: { fontSize: 13, fontWeight: '800', color: C.dark, marginBottom: 2 },
@@ -414,7 +412,7 @@ const s = StyleSheet.create({
     backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border,
     borderRadius: 16, marginBottom: 8,
   },
-  cardIcon: { width: 52, height: 52, borderRadius: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 1, flexShrink: 0 },
+  cardImage: { width: 52, height: 52, borderRadius: 15, flexShrink: 0 },
   cardName: { fontSize: 14, fontWeight: '700', color: C.dark, flex: 1, marginRight: 8 },
   cardSub: { fontSize: 11, color: C.muted, marginTop: 2 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
