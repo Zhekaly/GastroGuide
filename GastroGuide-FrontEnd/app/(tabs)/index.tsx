@@ -1,7 +1,8 @@
 import { router, useFocusEffect } from 'expo-router';
+import * as Location from 'expo-location';
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  Image,
+  // Image,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -14,7 +15,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { getCategories, getRestaurants, Restaurant, Category } from '../../services/restaurants';
 import { getOffers, Offer } from '../../services/offers';
-import { getRestaurantImage } from '../../utils/restaurantImages';
+// import { getRestaurantImage } from '../../utils/restaurantImages';
+import { getRestaurantImageSource } from '../../utils/restaurantImages';
+import { parseDistanceToMeters } from '@/utils/format';
+import { Image } from 'expo-image';
 
 const C = {
   bg: '#FDF8F2', dark: '#1A1208', accent: '#E8420A',
@@ -48,13 +52,53 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [categories, setCategories] = useState<Category[]>([]);
 
+  // const loadData = useCallback(async () => {
+  //   try {
+  //     setLoading(true);
+  //     setError(null);
+
+  //     const [restaurantsData, offersData, categoriesData] = await Promise.all([
+  //       getRestaurants(),
+  //       getOffers(),
+  //       getCategories(),
+  //     ]);
+
+  //     setRestaurants(restaurantsData);
+  //     setOffers(offersData);
+  //     setCategories(categoriesData);
+  //   } catch (err) {
+  //     console.error('Failed to load home data:', err);
+  //     setError('Не удалось загрузить данные');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, []);
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
+      let lat: number | undefined;
+      let lng: number | undefined;
+
+      try {
+        const permission = await Location.requestForegroundPermissionsAsync();
+
+        if (permission.status === 'granted') {
+          const location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+
+          lat = location.coords.latitude;
+          lng = location.coords.longitude;
+        }
+      } catch (locationErr) {
+        console.error('Failed to get home location:', locationErr);
+      }
+
       const [restaurantsData, offersData, categoriesData] = await Promise.all([
-        getRestaurants(),
+        getRestaurants(lat, lng),
         getOffers(),
         getCategories(),
       ]);
@@ -81,7 +125,8 @@ export default function HomeScreen() {
   );
 
   const featured = restaurants.filter(r => r.rating >= 4.7).slice(0, 3);
-  const nearby = restaurants.filter(r => parseInt(r.dist) < 700);
+  // const nearby = restaurants.filter(r => parseInt(r.dist) < 700);
+  const nearby = restaurants.filter(r => parseDistanceToMeters(r.dist) < 700);
   const open = restaurants.filter(r => r.open);
 
   const allCategories = [
@@ -251,7 +296,14 @@ export default function HomeScreen() {
                 onPress={() => router.push({ pathname: '/detail', params: { id: r.id } })}
                 activeOpacity={0.8}
               >
-                <Image source={getRestaurantImage(r.id)} style={s.featImage} />
+                {/* <Image source={getRestaurantImage(r.id)} style={s.featImage} /> */}
+                <Image
+                  source={getRestaurantImageSource(r)}
+                  style={s.featImage}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  transition={150}
+                />
                 <View style={[s.featBadge, { backgroundColor: r.color + '18', borderColor: r.color + '35' }]}>
                   <Text style={[s.featBadgeText, { color: r.color }]}>{r.tag}</Text>
                 </View>
@@ -300,7 +352,14 @@ export default function HomeScreen() {
               onPress={() => router.push({ pathname: '/detail', params: { id: r.id } })}
               activeOpacity={0.8}
             >
-              <Image source={getRestaurantImage(r.id)} style={s.cardImage} />
+              {/* <Image source={getRestaurantImage(r.id)} style={s.cardImage} /> */}
+              <Image
+                source={getRestaurantImageSource(r)}
+                style={s.cardImage}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={150}
+              />
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Text style={s.cardName}>{r.name}</Text>

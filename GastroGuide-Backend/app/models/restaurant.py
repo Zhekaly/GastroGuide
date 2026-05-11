@@ -2,9 +2,9 @@
 # Описывает таблицу restaurants, её поля,
 # а также связи с меню, категориями, отзывами и избранным.
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, time
 
-from sqlalchemy import String, Float, Integer, Boolean, DateTime, Text, ForeignKey
+from sqlalchemy import String, Float, Integer, Boolean, DateTime, Text, ForeignKey, Time
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -42,6 +42,10 @@ class Restaurant(Base):
     phone: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     hours: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    opens_at: Mapped[time | None] = mapped_column(Time, nullable=True)
+    closes_at: Mapped[time | None] = mapped_column(Time, nullable=True)
+    is_24_7: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     lat: Mapped[float] = mapped_column(Float, nullable=False)
     lng: Mapped[float] = mapped_column(Float, nullable=False)

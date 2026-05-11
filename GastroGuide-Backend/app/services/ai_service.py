@@ -10,6 +10,7 @@ from app.models.restaurant import Restaurant
 from app.models.menu_item import MenuItem
 from app.models.offer import Offer
 from app.services.location_service import haversine_distance
+from app.services.opening_hours_service import is_restaurant_open
 
 
 genai.configure(api_key=settings.gemini_api_key)
@@ -95,8 +96,11 @@ def build_nearby_context(lat: float | None, lng: float | None, restaurants: list
     lines = []
     for restaurant, distance_m in nearby[:10]:
         dist_str = f"{round(distance_m)} m" if distance_m < 1000 else f"{distance_m / 1000:.1f} km"
+
+        is_open = is_restaurant_open(restaurant)
+
         lines.append(
-            f"- {restaurant.name} ({restaurant.type}, rating {restaurant.rating}, price {restaurant.price}, distance {dist_str}, open={restaurant.open})"
+            f"- {restaurant.name} ({restaurant.type}, rating {restaurant.rating}, price {restaurant.price}, distance {dist_str}, open={is_open})"
         )
 
     return "\n".join(lines)

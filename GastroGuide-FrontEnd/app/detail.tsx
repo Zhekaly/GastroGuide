@@ -1,5 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import * as Location from 'expo-location';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -28,7 +29,8 @@ import {
   updateReview,
 } from '../services/reviews';
 import { getProfileMe } from '../services/profile';
-import { getRestaurantImage } from '../utils/restaurantImages';
+// import { getRestaurantImage } from '../utils/restaurantImages';
+import { getRestaurantImageSource } from '../utils/restaurantImages';
 
 const C = {
   bg: '#FDF8F2',
@@ -102,8 +104,32 @@ export default function DetailScreen() {
       const authenticated = await authService.isAuthenticated();
       setIsGuest(!authenticated);
 
+      // const [restaurantData, offersData, reviewsData] = await Promise.all([
+      //   getRestaurantById(restaurantId),
+      //   getRestaurantOffers(restaurantId),
+      //   getReviewsByRestaurant(restaurantId),
+      // ]);
+
+      let lat: number | undefined;
+      let lng: number | undefined;
+
+      try {
+        const permission = await Location.requestForegroundPermissionsAsync();
+
+        if (permission.status === 'granted') {
+          const location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+
+          lat = location.coords.latitude;
+          lng = location.coords.longitude;
+        }
+      } catch (locationErr) {
+        console.error('Failed to get detail location:', locationErr);
+      }
+
       const [restaurantData, offersData, reviewsData] = await Promise.all([
-        getRestaurantById(restaurantId),
+        getRestaurantById(restaurantId, lat, lng),
         getRestaurantOffers(restaurantId),
         getReviewsByRestaurant(restaurantId),
       ]);
@@ -112,21 +138,58 @@ export default function DetailScreen() {
       setOffers(offersData);
       setReviews(reviewsData);
 
+      // if (authenticated) {
+      //   const [favorites, me] = await Promise.all([
+      //     getFavorites(),
+      //     getProfileMe(),
+      //   ]);
+
+      //   const isFavorite = favorites.some(item => item.id === restaurantId);
+      //   setSaved(isFavorite);
+      //   setCurrentUserId(me.id);
+
+      //   const myReview = reviewsData.find(item => item.user_id === me.id);
+      //   if (myReview) {
+      //     setReviewText(myReview.text);
+      //     setReviewRating(myReview.rating);
+      //   } else {
+      //     setReviewText('');
+      //     setReviewRating(5);
+      //   }
+      // } else {
+      //   setSaved(false);
+      //   setCurrentUserId(null);
+      //   setReviewText('');
+      //   setReviewRating(5);
+      // }
+
       if (authenticated) {
-        const [favorites, me] = await Promise.all([
-          getFavorites(),
-          getProfileMe(),
-        ]);
+        try {
+          const [favorites, me] = await Promise.all([
+            getFavorites(),
+            getProfileMe(),
+          ]);
 
-        const isFavorite = favorites.some(item => item.id === restaurantId);
-        setSaved(isFavorite);
-        setCurrentUserId(me.id);
+          const isFavorite = favorites.some(item => item.id === restaurantId);
+          setSaved(isFavorite);
+          setCurrentUserId(me.id);
 
-        const myReview = reviewsData.find(item => item.user_id === me.id);
-        if (myReview) {
-          setReviewText(myReview.text);
-          setReviewRating(myReview.rating);
-        } else {
+          const myReview = reviewsData.find(item => item.user_id === me.id);
+          if (myReview) {
+            setReviewText(myReview.text);
+            setReviewRating(myReview.rating);
+          } else {
+            setReviewText('');
+            setReviewRating(5);
+          }
+        } catch (authErr) {
+          console.error('Failed to load auth-only detail data:', authErr);
+
+          await authService.logout();
+
+          setIsGuest(true);
+          setSaved(false);
+          setCurrentUserId(null);
           setReviewText('');
           setReviewRating(5);
         }
@@ -341,7 +404,8 @@ export default function DetailScreen() {
 
       <Animated.View style={[s.hero, { backgroundColor: r.color + '18' }]}>
         <Animated.Image
-          source={getRestaurantImage(r.id)}
+          // source={getRestaurantImage(r.id)}
+          source={getRestaurantImageSource(r)}
           style={[
             s.heroImage,
             {
@@ -427,7 +491,19 @@ export default function DetailScreen() {
           {stats.map(st => (
             <View key={st.label} style={s.statCard}>
               {st.icon}
-              <Text style={s.statValue}>{st.value}</Text>
+              {/* <Text style={s.statValue}>{st.value}</Text> */}
+              <Text
+                style={[
+                  s.statValue,
+                  st.label === 'Пешком' && s.statValueTime,
+                ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.65}
+                ellipsizeMode="clip"
+              >
+                {st.value}
+              </Text>
               <Text style={s.statLabel}>{st.label}</Text>
             </View>
           ))}
@@ -705,8 +781,27 @@ const s = StyleSheet.create({
   featureChip: { backgroundColor: '#fff', borderWidth: 1, borderColor: C.border, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
   featureText: { fontSize: 10, color: C.dark, fontWeight: '600' },
   statsRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  statCard: { flex: 1, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 14, padding: 10, alignItems: 'center', gap: 3 },
+  // statCard: { flex: 1, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 14, padding: 10, alignItems: 'center', gap: 3 },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: C.border,
+    borderRadius: 14,
+    paddingHorizontal: 5,
+    paddingVertical: 10,
+    alignItems: 'center',
+    gap: 3,
+  },
   statValue: { fontSize: 14, fontWeight: '900', color: C.dark },
+
+  statValueTime: {
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: 'center',
+    includeFontPadding: false,
+  },
+
   statLabel: { fontSize: 9, color: C.muted, marginTop: 1 },
   tabsRow: { flexDirection: 'row', backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 14, marginBottom: 14, padding: 4 },
   tab: { flex: 1, flexDirection: 'row', paddingVertical: 8, alignItems: 'center', justifyContent: 'center', gap: 5, borderRadius: 10 },

@@ -32,6 +32,11 @@ export type Restaurant = {
   phone: string;
   description: string;
   hours: string;
+
+  opens_at?: string | null;
+  closes_at?: string | null;
+  is_24_7?: boolean;
+
   lat: number;
   lng: number;
   features: string[];
@@ -67,8 +72,25 @@ export async function getRestaurants(lat?: number, lng?: number): Promise<Restau
   return apiGet<Restaurant[]>(`/restaurants${query}`);
 }
 
-export async function getRestaurantById(id: number): Promise<Restaurant> {
-  return apiGet<Restaurant>(`/restaurants/${id}`);
+// export async function getRestaurantById(id: number): Promise<Restaurant> {
+//   return apiGet<Restaurant>(`/restaurants/${id}`);
+// }
+
+export async function getRestaurantById(
+  id: number,
+  lat?: number,
+  lng?: number
+): Promise<Restaurant> {
+  const params = new URLSearchParams();
+
+  if (lat !== undefined && lng !== undefined) {
+    params.append('lat', String(lat));
+    params.append('lng', String(lng));
+  }
+
+  const query = params.toString() ? `?${params.toString()}` : '';
+
+  return apiGet<Restaurant>(`/restaurants/${id}${query}`);
 }
 
 export async function getRestaurantMenu(id: number): Promise<MenuItem[]> {

@@ -2,7 +2,7 @@
 # Используются для валидации и сериализации данных ресторанов,
 # которые backend отправляет во frontend.
 
-from datetime import datetime
+from datetime import datetime, time
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -34,6 +34,11 @@ class RestaurantResponse(BaseModel):
     phone: str
     description: str
     hours: str
+
+    opens_at: time | None = None
+    closes_at: time | None = None
+    is_24_7: bool = False
+
     lat: float
     lng: float
     features: list[str]

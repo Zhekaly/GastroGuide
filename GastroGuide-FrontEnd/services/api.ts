@@ -1,7 +1,8 @@
 import { storage } from './storage';
 
-const BASE_URL = 'http://192.168.1.78:8000/api/v1';
-// const BASE_URL = 'http://127.0.0.1:8000/api/v1';
+const BASE_URL = 'http://192.168.1.78:8000/api/v1'; // HOME
+// const BASE_URL = 'http://127.0.0.1:8000/api/v1'; // LOCAL
+// const BASE_URL = 'http://10.202.10.196:8000/api/v1'; // STUDY
 
 async function request<T = any>(
   url: string,
@@ -28,8 +29,27 @@ async function request<T = any>(
   const contentType = response.headers.get('content-type') || '';
   const isJson = contentType.includes('application/json');
 
+  // if (!response.ok) {
+  //   let message = 'API error';
+  //   try {
+  //     if (isJson) {
+  //       const data = await response.json();
+  //       message =
+  //         data?.detail ||
+  //         data?.error?.message ||
+  //         JSON.stringify(data);
+  //     } else {
+  //       message = await response.text();
+  //     }
+  //   } catch {
+  //     message = `HTTP ${response.status}`;
+  //   }
+  //   throw new Error(message);
+  // }
+
   if (!response.ok) {
     let message = 'API error';
+
     try {
       if (isJson) {
         const data = await response.json();
@@ -43,6 +63,11 @@ async function request<T = any>(
     } catch {
       message = `HTTP ${response.status}`;
     }
+
+    if (response.status === 401) {
+      await storage.clearTokens();
+    }
+
     throw new Error(message);
   }
 

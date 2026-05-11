@@ -3,7 +3,7 @@ import { router, useFocusEffect } from 'expo-router';
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   Alert,
-  Image,
+  // Image,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -18,7 +18,9 @@ import { getFavorites } from '../../services/favorites';
 import { getProfileMe, getProfileStats, Profile, ProfileStats } from '../../services/profile';
 import { Restaurant } from '../../services/restaurants';
 import { authService } from '../../services/auth';
-import { getRestaurantImage } from '../../utils/restaurantImages';
+// import { getRestaurantImage } from '../../utils/restaurantImages';
+import { getRestaurantImageSource } from '../../utils/restaurantImages';
+import { Image } from 'expo-image';
 
 const C = {
   bg: '#FDF8F2', dark: '#1A1208', accent: '#E8420A',
@@ -192,7 +194,14 @@ export default function ProfileScreen() {
                 activeOpacity={0.8}
                 onPress={() => router.push({ pathname: '/detail', params: { id: r.id } })}
               >
-                <Image source={getRestaurantImage(r.id)} style={s.cardImage} />
+                {/* <Image source={getRestaurantImage(r.id)} style={s.cardImage} /> */}
+                <Image
+                  source={getRestaurantImageSource(r)}
+                  style={s.cardImage}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  transition={150}
+                />
                 <View style={{ flex: 1 }}>
                   <Text style={s.cardName}>{r.name}</Text>
                   <Text style={s.cardSub}>{r.type} · ⭐ {r.rating} · {r.dist}</Text>

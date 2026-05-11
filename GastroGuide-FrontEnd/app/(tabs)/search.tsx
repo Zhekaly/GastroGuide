@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
-  Image,
+  // Image,
   SafeAreaView, StatusBar,
   StyleSheet,
   Text,
@@ -14,7 +14,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { getCategories, getRestaurants, searchRestaurants, Restaurant, Category } from '../../services/restaurants';
 import * as Location from 'expo-location';
-import { getRestaurantImage } from '../../utils/restaurantImages';
+// import { getRestaurantImage } from '../../utils/restaurantImages';
+import { getRestaurantImageSource } from '../../utils/restaurantImages';
+import { parseDistanceToMeters } from '../../utils/format';
+import { Image } from 'expo-image';
 
 
 const CATEGORY_ICONS: Record<string, React.ComponentProps<typeof Ionicons>['name']> = {
@@ -146,7 +149,10 @@ export default function SearchScreen() {
       })
       .sort((a, b) => {
         if (sort === 'По рейтингу') return b.rating - a.rating;
-        if (sort === 'По расстоянию') return parseInt(a.dist) - parseInt(b.dist);
+        // if (sort === 'По расстоянию') return parseInt(a.dist) - parseInt(b.dist);
+        if (sort === 'По расстоянию') {
+          return parseDistanceToMeters(a.dist) - parseDistanceToMeters(b.dist);
+        }
         if (sort === 'По цене') return a.price.length - b.price.length;
         return 0;
       });
@@ -262,7 +268,14 @@ export default function SearchScreen() {
             onPress={() => router.push({ pathname: '/detail', params: { id: r.id } })}
             activeOpacity={0.8}
           >
-            <Image source={getRestaurantImage(r.id)} style={s.cardImage} />
+            {/* <Image source={getRestaurantImage(r.id)} style={s.cardImage} /> */}
+            <Image
+              source={getRestaurantImageSource(r)}
+              style={s.cardImage}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              transition={150}
+            />
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Text style={s.cardName}>{r.name}</Text>

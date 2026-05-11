@@ -12,25 +12,11 @@ from app.schemas.restaurant import RestaurantResponse, MenuItemResponse
 from app.models.menu_item import MenuItem
 from app.models.offer import Offer
 from app.services.location_service import haversine_distance
-
-###############---Coordination Logic Without PostGIS---###############
-# import math
-#
-# def calculate_distance(lat1, lng1, lat2, lng2):
-#     return math.sqrt((lat1 - lat2) ** 2 + (lng1 - lng2) ** 2) * 111000
-######################################################################
-
-def format_distance_and_time(distance_m: float) -> tuple[str, str]:
-    if distance_m < 1000:
-        dist_str = f"{int(distance_m)} м"
-    else:
-        dist_str = f"{distance_m / 1000:.1f} км"
-
-    # средняя скорость пешком ~ 5 км/ч
-    time_minutes = max(1, round(distance_m / 1000 / 5 * 60))
-    time_str = f"{time_minutes} мин"
-
-    return dist_str, time_str
+from app.services.distance_service import apply_dynamic_distance_to_restaurant
+from app.services.opening_hours_service import (
+    apply_dynamic_open_status,
+    apply_dynamic_open_status_to_restaurants,
+)
 
 router = APIRouter(prefix="/api/v1/restaurants", tags=["Restaurants"])
 
@@ -48,16 +34,11 @@ def get_restaurants(
 
     restaurants = query.all()
 
+    apply_dynamic_open_status_to_restaurants(restaurants)
+
     if lat is not None and lng is not None:
         for restaurant in restaurants:
-            if restaurant.lat is None or restaurant.lng is None:
-                continue
-
-            distance_m = haversine_distance(lat, lng, restaurant.lat, restaurant.lng)
-            dist_str, time_str = format_distance_and_time(distance_m)
-
-            restaurant.dist = dist_str
-            restaurant.time = time_str
+            apply_dynamic_distance_to_restaurant(restaurant, lat, lng)
 
     return restaurants
 
@@ -81,16 +62,11 @@ def search_restaurants(
         .all()
     )
 
+    apply_dynamic_open_status_to_restaurants(restaurants)
+
     if lat is not None and lng is not None:
         for restaurant in restaurants:
-            if restaurant.lat is None or restaurant.lng is None:
-                continue
-
-            distance_m = haversine_distance(lat, lng, restaurant.lat, restaurant.lng)
-            dist_str, time_str = format_distance_and_time(distance_m)
-
-            restaurant.dist = dist_str
-            restaurant.time = time_str
+            apply_dynamic_distance_to_restaurant(restaurant, lat, lng)
 
     return restaurants
 
@@ -113,6 +89,8 @@ def get_nearby_restaurants(
         distance_m = haversine_distance(lat, lng, restaurant.lat, restaurant.lng)
 
         if distance_m <= radius:
+            apply_dynamic_open_status(restaurants)
+            apply_dynamic_distance_to_restaurant(restaurant, lat, lng)
             nearby_restaurants.append((restaurant, distance_m))
 
     nearby_restaurants.sort(key=lambda item: item[1])
@@ -131,7 +109,7 @@ def get_restaurant_offer(restaurant_id: int, db: Session = Depends(get_db)):
     return offers
 
 @router.get("/{restaurant_id}", response_model=RestaurantResponse)
-def get_restaurant_by_id(restaurant_id: int, db: Session = Depends(get_db)):
+def get_restaurant_by_id(restaurant_id: int, lat: float | None = Query(default=None), lng: float | None = Query(default=None), db: Session = Depends(get_db)):
     restaurant = (
         db.query(Restaurant)
         .options(selectinload(Restaurant.menu))
@@ -141,5 +119,10 @@ def get_restaurant_by_id(restaurant_id: int, db: Session = Depends(get_db)):
 
     if not restaurant:
         raise HTTPException(status_code=404, detail="Restaurant not found")
+
+    apply_dynamic_open_status(restaurant)
+
+    if lat is not None and lng is not None:
+        apply_dynamic_distance_to_restaurant(restaurant, lat, lng)
 
     return restaurant

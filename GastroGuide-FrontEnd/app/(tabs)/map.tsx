@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
-  Image,
+  // Image,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -21,7 +21,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import WebView from 'react-native-webview';
 import { getRestaurants, Restaurant } from '../../services/restaurants';
 import { getRoute } from '../../services/routes';
-import { getRestaurantImage } from '../../utils/restaurantImages';
+// import { getRestaurantImage } from '../../utils/restaurantImages';
+import { getRestaurantImageSource } from '../../utils/restaurantImages';
+import {
+  formatDistanceFromMeters,
+  formatDurationFromSeconds,
+  parseDistanceToMeters,
+} from '../../utils/format';
+import { Image } from 'expo-image';
 
 const { height: SH } = Dimensions.get('window');
 const MAP_H = SH * 0.55;
@@ -145,16 +152,52 @@ export default function MapScreen() {
   const [userCoords, setUserCoords] = useState<[number, number]>(FALLBACK_COORDS);
   const [locationReady, setLocationReady] = useState(false);
 
+  // useEffect(() => {
+  //   const loadInitialData = async () => {
+  //     try {
+  //       setLoading(true);
+
+  //       const [restaurantsData] = await Promise.all([
+  //         getRestaurants(),
+  //       ]);
+
+  //       setRestaurants(restaurantsData);
+
+  //       try {
+  //         const permission = await Location.requestForegroundPermissionsAsync();
+
+  //         if (permission.status === 'granted') {
+  //           const location = await Location.getCurrentPositionAsync({
+  //             accuracy: Location.Accuracy.Balanced,
+  //           });
+
+  //           setUserCoords([location.coords.latitude, location.coords.longitude]);
+  //         }
+  //       } catch (locationErr) {
+  //         console.error('Failed to get user location:', locationErr);
+  //       } finally {
+  //         setLocationReady(true);
+  //       }
+  //     } catch (err) {
+  //       console.error('Failed to load restaurants for map:', err);
+  //       setError('Не удалось загрузить карту');
+  //       setLocationReady(true);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   loadInitialData();
+  // }, []);
+
   useEffect(() => {
     const loadInitialData = async () => {
       try {
         setLoading(true);
 
-        const [restaurantsData] = await Promise.all([
-          getRestaurants(),
-        ]);
-
-        setRestaurants(restaurantsData);
+        let coords: [number, number] = FALLBACK_COORDS;
+        let lat: number | undefined;
+        let lng: number | undefined;
 
         try {
           const permission = await Location.requestForegroundPermissionsAsync();
@@ -164,13 +207,20 @@ export default function MapScreen() {
               accuracy: Location.Accuracy.Balanced,
             });
 
-            setUserCoords([location.coords.latitude, location.coords.longitude]);
+            coords = [location.coords.latitude, location.coords.longitude];
+            lat = location.coords.latitude;
+            lng = location.coords.longitude;
           }
         } catch (locationErr) {
           console.error('Failed to get user location:', locationErr);
-        } finally {
-          setLocationReady(true);
         }
+
+        setUserCoords(coords);
+
+        const restaurantsData = await getRestaurants(lat, lng);
+        setRestaurants(restaurantsData);
+
+        setLocationReady(true);
       } catch (err) {
         console.error('Failed to load restaurants for map:', err);
         setError('Не удалось загрузить карту');
@@ -185,7 +235,8 @@ export default function MapScreen() {
 
   const filtered = restaurants.filter(r => {
     if (activeFilter === 'Открыто') return r.open;
-    if (activeFilter === 'Рядом') return parseInt(r.dist) < 700;
+    // if (activeFilter === 'Рядом') return parseInt(r.dist) < 700;
+    if (activeFilter === 'Рядом') return parseDistanceToMeters(r.dist) < 700;
     if (activeFilter === 'Топ') return r.rating >= 4.7;
     return true;
   });
@@ -235,12 +286,21 @@ export default function MapScreen() {
         (point: number[]) => [point[1], point[0]],
       );
 
+      // const distM = Math.round(data.distance ?? 0);
+      // const timeMin = Math.round((data.duration ?? 0) / 60);
+      // const distStr = distM >= 1000 ? `${(distM / 1000).toFixed(1)} км` : `${distM} м`;
+
+      // setRouteCoords(coords);
+      // setRouteInfo({ dist: distStr, time: `${timeMin} мин` });
+
       const distM = Math.round(data.distance ?? 0);
-      const timeMin = Math.round((data.duration ?? 0) / 60);
-      const distStr = distM >= 1000 ? `${(distM / 1000).toFixed(1)} км` : `${distM} м`;
+      const durationSeconds = Math.round(data.duration ?? 0);
+
+      const distStr = formatDistanceFromMeters(distM);
+      const timeStr = formatDurationFromSeconds(durationSeconds);
 
       setRouteCoords(coords);
-      setRouteInfo({ dist: distStr, time: `${timeMin} мин` });
+      setRouteInfo({ dist: distStr, time: timeStr });
     } catch (err) {
       console.error('Route error:', err);
       setRouteCoords(null);
@@ -374,7 +434,14 @@ export default function MapScreen() {
               onPress={() => router.push({ pathname: '/detail', params: { id: selected.id } })}
               activeOpacity={0.9}
             >
-              <Image source={getRestaurantImage(selected.id)} style={s.selectedImage} />
+              {/* <Image source={getRestaurantImage(selected.id)} style={s.selectedImage} /> */}
+              <Image
+                source={getRestaurantImageSource(selected)}
+                style={s.selectedImage}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={150}
+              />
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={s.selectedName}>{selected.name}</Text>
@@ -444,7 +511,14 @@ export default function MapScreen() {
                   }}
                   activeOpacity={0.8}
                 >
-                  <Image source={getRestaurantImage(r.id)} style={s.miniImage} />
+                  {/* <Image source={getRestaurantImage(r.id)} style={s.miniImage} /> */}
+                  <Image
+                    source={getRestaurantImageSource(r)}
+                    style={s.miniImage}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                    transition={150}
+                  />
                   <Text style={s.miniName} numberOfLines={1}>
                     {r.name}
                   </Text>
