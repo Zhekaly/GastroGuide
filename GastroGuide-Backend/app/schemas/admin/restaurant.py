@@ -2,7 +2,14 @@
 
 from datetime import datetime, time
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+def _normalize_category_id(value: int | None) -> int | None:
+    """0 от клиента трактуем как «без категории» (None)."""
+    if value == 0:
+        return None
+    return value
 
 
 class AdminMenuItemPayload(BaseModel):
@@ -18,6 +25,11 @@ class AdminRestaurantBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     type: str = Field(..., min_length=1, max_length=100)
     category_id: int | None = None
+
+    @field_validator("category_id", mode="before")
+    @classmethod
+    def _normalize_category_id(cls, v):
+        return _normalize_category_id(v)
 
     emoji: str = Field(default="🍽️", max_length=20)
     color: str = Field(default="#E8420A", max_length=20)
@@ -54,6 +66,11 @@ class AdminRestaurantUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     type: str | None = Field(default=None, min_length=1, max_length=100)
     category_id: int | None = None
+
+    @field_validator("category_id", mode="before")
+    @classmethod
+    def _normalize_category_id(cls, v):
+        return _normalize_category_id(v)
 
     emoji: str | None = Field(default=None, max_length=20)
     color: str | None = Field(default=None, max_length=20)

@@ -116,6 +116,7 @@ export function RestaurantForm({ restaurant, onSuccess }: RestaurantFormProps) {
       ...form,
       opens_at: form.is_24_7 ? null : form.opens_at,
       closes_at: form.is_24_7 ? null : form.closes_at,
+      category_id: form.category_id && form.category_id > 0 ? form.category_id : null,
     };
 
     if (restaurant) updateMutation.mutate(payload);
