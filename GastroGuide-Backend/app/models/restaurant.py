@@ -38,6 +38,14 @@ class Restaurant(Base):
 
     open: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
+    is_hidden: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+        index=True,
+    )
+
     address: Mapped[str] = mapped_column(String(255), nullable=False)
     phone: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)

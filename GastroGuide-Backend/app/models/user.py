@@ -4,10 +4,14 @@
 
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Integer, String
+from sqlalchemy import Boolean, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+
+USER_ROLE_USER = "user"
+USER_ROLE_ADMIN = "admin"
 
 
 class User(Base):
@@ -18,6 +22,20 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     city: Mapped[str] = mapped_column(String(100), nullable=False, default="Астана")
+
+    role: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default=USER_ROLE_USER,
+        server_default=USER_ROLE_USER,
+        index=True,
+    )
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default="true",
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -34,3 +52,7 @@ class User(Base):
     favorites = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")
     reviews = relationship("Review", back_populates="user")
     ai_chat_sessions = relationship("AIChatSession", back_populates="user", cascade="all, delete-orphan")
+
+    @property
+    def is_admin(self) -> bool:
+        return self.role == USER_ROLE_ADMIN

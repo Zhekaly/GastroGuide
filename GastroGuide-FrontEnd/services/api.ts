@@ -1,6 +1,7 @@
 import { storage } from './storage';
 
-const BASE_URL = 'http://192.168.1.78:8000/api/v1'; // HOME
+const BASE_URL = 'http://127.0.0.1:8000/api/v1';
+//const BASE_URL = 'http://192.168.1.78:8000/api/v1'; // HOME
 // const BASE_URL = 'http://127.0.0.1:8000/api/v1'; // LOCAL
 // const BASE_URL = 'http://10.202.10.196:8000/api/v1'; // STUDY
 

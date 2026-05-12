@@ -11,6 +11,7 @@ from app.models.restaurant import Restaurant
 from app.models.review import Review
 from app.models.user import User
 from app.schemas.review import ReviewCreateRequest, ReviewUpdateRequest, ReviewResponse
+from app.services.rating_service import recalculate_restaurant_rating
 
 router = APIRouter(prefix="/api/v1/reviews", tags=["Reviews"])
 
@@ -71,22 +72,9 @@ def create_review(
     )
 
     db.add(review)
-
     db.flush()
 
-    restaurant_reviews = (
-        db.query(Review)
-        .filter(Review.restaurant_id == restaurant_id)
-        .all()
-    )
-
-    restaurant.reviews = len(restaurant_reviews)
-
-    if restaurant_reviews:
-        restaurant.rating = round(
-            sum(r.rating for r in restaurant_reviews) / len(restaurant_reviews),
-            1,
-        )
+    recalculate_restaurant_rating(db, restaurant_id)
 
     db.commit()
     db.refresh(review)
@@ -128,21 +116,7 @@ def update_review(
     db.add(review)
     db.flush()
 
-    restaurant_reviews = (
-        db.query(Review)
-        .filter(Review.restaurant_id == restaurant_id)
-        .all()
-    )
-
-    restaurant.reviews = len(restaurant_reviews)
-
-    if restaurant_reviews:
-        restaurant.rating = round(
-            sum(r.rating for r in restaurant_reviews) / len(restaurant_reviews),
-            1,
-        )
-    else:
-        restaurant.rating = 0
+    recalculate_restaurant_rating(db, restaurant_id)
 
     db.commit()
     db.refresh(review)

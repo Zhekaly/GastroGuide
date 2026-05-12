@@ -27,7 +27,7 @@ def get_restaurants(
     lng: float | None = Query(default=None),
     db: Session = Depends(get_db),
 ):
-    query = db.query(Restaurant)
+    query = db.query(Restaurant).filter(Restaurant.is_hidden.is_(False))
 
     if category_id is not None:
         query = query.filter(Restaurant.category_id == category_id)
@@ -52,6 +52,7 @@ def search_restaurants(
     restaurants = (
         db.query(Restaurant)
         .options(selectinload(Restaurant.menu))
+        .filter(Restaurant.is_hidden.is_(False))
         .filter(
             or_(
                 Restaurant.name.ilike(f"%{q}%"),
@@ -78,7 +79,7 @@ def get_nearby_restaurants(
     radius: int = Query(1000, ge=1),
     db: Session = Depends(get_db),
 ):
-    restaurants = db.query(Restaurant).all()
+    restaurants = db.query(Restaurant).filter(Restaurant.is_hidden.is_(False)).all()
 
     nearby_restaurants = []
 
@@ -113,7 +114,7 @@ def get_restaurant_by_id(restaurant_id: int, lat: float | None = Query(default=N
     restaurant = (
         db.query(Restaurant)
         .options(selectinload(Restaurant.menu))
-        .filter(Restaurant.id == restaurant_id)
+        .filter(Restaurant.id == restaurant_id, Restaurant.is_hidden.is_(False))
         .first()
     )
 
