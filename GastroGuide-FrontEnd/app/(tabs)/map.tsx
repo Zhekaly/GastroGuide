@@ -100,6 +100,19 @@ function buildMapHTML(
   `
       : '';
 
+  const selectedRestaurant = selectedId
+    ? restaurants.find(r => r.id === selectedId)
+    : null;
+  const focusJS =
+    selectedRestaurant &&
+    typeof selectedRestaurant.lat === 'number' &&
+    typeof selectedRestaurant.lng === 'number' &&
+    !routeCoords
+      ? `
+    map.setView([${selectedRestaurant.lat}, ${selectedRestaurant.lng}], Math.max(map.getZoom(), 16), {animate: false});
+  `
+      : '';
+
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -131,6 +144,7 @@ function buildMapHTML(
 
     ${markersJS}
     ${routeJS}
+    ${focusJS}
 
     map.on('click', function() {
       window.ReactNativeWebView.postMessage(JSON.stringify({type:'deselect'}));
@@ -266,7 +280,6 @@ export default function MapScreen() {
           setSelected(found);
           setRouteCoords(null);
           setRouteInfo(null);
-          buildRoute(found, travelMode);
         }
       } else if (data.type === 'deselect') {
         setSelected(null);
@@ -352,7 +365,7 @@ export default function MapScreen() {
 
   const switchMode = (mode: 'foot-walking' | 'driving-car') => {
     setTravelMode(mode);
-    if (selected) buildRoute(selected, mode);
+    if (selected && routeCoords) buildRoute(selected, mode);
   };
 
   if (loading || !locationReady) {
@@ -462,6 +475,16 @@ export default function MapScreen() {
                 <Ionicons name="time-outline" size={14} color={C.muted} style={{ marginLeft: 8 }} />
               )}
 
+              <TouchableOpacity
+                style={[s.routeBtn, routeLoading && { opacity: 0.7 }]}
+                onPress={() => buildRoute(selected, travelMode)}
+                disabled={routeLoading}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="navigate-outline" size={13} color="#fff" />
+                <Text style={s.routeBtnText}>{routeLoading ? 'Строим...' : 'Маршрут'}</Text>
+              </TouchableOpacity>
+
               {routeInfo && !routeLoading && (
                 <View style={s.routeInfo}>
                   <Text style={s.routeInfoText}>{routeInfo.dist} · {routeInfo.time}</Text>
@@ -547,7 +570,6 @@ export default function MapScreen() {
                     setSelected(r);
                     setRouteCoords(null);
                     setRouteInfo(null);
-                    buildRoute(r, travelMode);
                   }}
                   activeOpacity={0.8}
                 >
@@ -632,10 +654,12 @@ const s = StyleSheet.create({
   miniName: { fontSize: 10, fontWeight: '700', color: C.dark, textAlign: 'center', lineHeight: 13, marginBottom: 2 },
   miniDist: { fontSize: 9, color: C.muted },
   miniRating: { fontSize: 10, fontWeight: '700', marginTop: 2 },
-  routeBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, marginBottom: 10 },
+  routeBar: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, marginBottom: 10 },
   modeBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1.5, borderColor: C.border, borderRadius: 20, backgroundColor: '#fff' },
   modeBtnActive: { backgroundColor: C.accent + '12', borderColor: C.accent },
   modeBtnText: { fontSize: 11, color: C.dark, fontWeight: '600' },
+  routeBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: C.accent },
+  routeBtnText: { fontSize: 11, color: '#fff', fontWeight: '700' },
   routeInfo: { marginLeft: 'auto' as any, backgroundColor: C.accent + '12', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
   routeInfoText: { fontSize: 11, color: C.accent, fontWeight: '700' },
   selectedCard: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, padding: 14, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 18 },
