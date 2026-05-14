@@ -68,6 +68,7 @@ export default function OnboardingScreen() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const insets = useSafeAreaInsets();
 
   const contentOpacity = useRef(new Animated.Value(1)).current;
@@ -304,7 +305,24 @@ export default function OnboardingScreen() {
               <Text style={s.label}>ПАРОЛЬ</Text>
               <View style={s.inputWrap}>
                 <Ionicons name="lock-closed-outline" size={16} color={C.muted} style={s.inputIcon} />
-                <TextInput style={s.input} placeholder={isLogin ? '••••••••' : 'Минимум 6 символов'} placeholderTextColor={C.muted} value={password} onChangeText={setPassword} secureTextEntry />
+                <TextInput
+                  style={s.input}
+                  placeholder={isLogin ? '••••••••' : 'Минимум 6 символов'}
+                  placeholderTextColor={C.muted}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  style={s.eyeBtn}
+                  onPress={() => setShowPassword(prev => !prev)}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+                >
+                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={C.muted} />
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -385,6 +403,7 @@ const s = StyleSheet.create({
   inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 14 },
   inputIcon: { paddingLeft: 16 },
   input: { flex: 1, paddingHorizontal: 12, paddingVertical: 14, fontSize: 15, color: C.dark },
+  eyeBtn: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   submitBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: C.accent, borderRadius: 18, paddingVertical: 18, marginBottom: 12 },
   submitText: { color: '#fff', fontSize: 13, fontWeight: '900', letterSpacing: 1.5 },
   switchRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 16 },

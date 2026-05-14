@@ -14,10 +14,24 @@ export function getRestaurantImageUri(restaurant?: Restaurant | null): string {
   return FALLBACK_RESTAURANT_IMAGE_URL;
 }
 
+export function getRestaurantImageUris(restaurant?: Restaurant | null): string[] {
+  const photos = restaurant?.photos?.filter(
+    (photo): photo is string => typeof photo === 'string' && photo.startsWith('http')
+  );
+
+  return photos && photos.length > 0 ? photos : [FALLBACK_RESTAURANT_IMAGE_URL];
+}
+
 export function getRestaurantImageSource(
   restaurant?: Restaurant | null
 ): ImageSourcePropType {
   return {
     uri: getRestaurantImageUri(restaurant),
   };
+}
+
+export function getRestaurantImageSources(
+  restaurant?: Restaurant | null
+): ImageSourcePropType[] {
+  return getRestaurantImageUris(restaurant).map(uri => ({ uri }));
 }

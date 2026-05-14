@@ -6,6 +6,8 @@ import {
   Alert,
   Animated,
   Linking,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Platform,
   SafeAreaView,
   Share,
@@ -14,6 +16,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   Vibration,
   View,
 } from 'react-native';
@@ -30,7 +33,7 @@ import {
 } from '../services/reviews';
 import { getProfileMe } from '../services/profile';
 // import { getRestaurantImage } from '../utils/restaurantImages';
-import { getRestaurantImageSource } from '../utils/restaurantImages';
+import { getRestaurantImageSources } from '../utils/restaurantImages';
 
 const C = {
   bg: '#FDF8F2',
@@ -66,6 +69,7 @@ function formatReviewDate(dateString: string) {
 export default function DetailScreen() {
   const { id } = useLocalSearchParams();
   const restaurantId = Number(id);
+  const { width: screenWidth } = useWindowDimensions();
 
   const [r, setRestaurant] = useState<Restaurant | null>(null);
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -76,6 +80,7 @@ export default function DetailScreen() {
   const [isGuest, setIsGuest] = useState(true);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'menu' | 'info' | 'reviews'>('menu');
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
 
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [reviewText, setReviewText] = useState('');
@@ -239,6 +244,10 @@ export default function DetailScreen() {
     }
   }, [saved, saveAnim]);
 
+  useEffect(() => {
+    setActivePhotoIndex(0);
+  }, [r?.id]);
+
   const handleToggleFavorite = async () => {
     if (isGuest) {
       Alert.alert(
@@ -355,7 +364,10 @@ export default function DetailScreen() {
   const handleCall = () => Linking.openURL(`tel:${r.phone}`);
 
   const handleRoute = () =>
-    Alert.alert('Маршрут', `Прокладываем маршрут до ${r.name}`, [{ text: 'OK' }]);
+    router.push({
+      pathname: '/(tabs)/map',
+      params: { restaurantId: String(r.id), buildRoute: '1' },
+    });
 
   const handleShare = async () => {
     try {
@@ -397,24 +409,57 @@ export default function DetailScreen() {
   const myReview = currentUserId
     ? reviews.find(item => item.user_id === currentUserId)
     : null;
+  const photoSources = getRestaurantImageSources(r);
+  const hasMultiplePhotos = photoSources.length > 1;
+
+  const handlePhotoMomentumEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const nextIndex = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
+    setActivePhotoIndex(Math.min(nextIndex, photoSources.length - 1));
+  };
 
   return (
     <SafeAreaView style={s.container}>
       <StatusBar barStyle="dark-content" backgroundColor={`${r.color}18`} />
 
       <Animated.View style={[s.hero, { backgroundColor: r.color + '18' }]}>
-        <Animated.Image
-          // source={getRestaurantImage(r.id)}
-          source={getRestaurantImageSource(r)}
+        <Animated.ScrollView
+          horizontal
+          pagingEnabled
+          bounces={false}
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={handlePhotoMomentumEnd}
+          scrollEventThrottle={16}
           style={[
-            s.heroImage,
+            s.heroCarousel,
             {
               transform: [{ translateY: heroTranslateY }, { scale: heroScale }],
             },
           ]}
-          resizeMode="cover"
-        />
-        <View style={s.heroOverlay} />
+        >
+          {photoSources.map((source, index) => (
+            <Animated.Image
+              key={`${r.id}-${index}`}
+              source={source}
+              style={[s.heroImage, { width: screenWidth }]}
+              resizeMode="cover"
+            />
+          ))}
+        </Animated.ScrollView>
+        <View pointerEvents="none" style={s.heroOverlay} />
+
+        {hasMultiplePhotos && (
+          <View pointerEvents="none" style={s.photoDots}>
+            {photoSources.map((_, index) => (
+              <View
+                key={`${r.id}-dot-${index}`}
+                style={[
+                  s.photoDot,
+                  index === activePhotoIndex && s.photoDotActive,
+                ]}
+              />
+            ))}
+          </View>
+        )}
 
         <TouchableOpacity style={[s.backBtn, { top: insets.top + 12 }]} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={20} color={C.dark} />
@@ -730,14 +775,34 @@ const s = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#EDE5D8',
   },
-  heroImage: {
+  heroCarousel: {
     ...StyleSheet.absoluteFillObject,
-    width: '100%',
+  },
+  heroImage: {
     height: '100%',
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(26, 18, 8, 0.12)',
+  },
+  photoDots: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 18,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  photoDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+  },
+  photoDotActive: {
+    width: 18,
+    backgroundColor: '#fff',
   },
   backBtn: {
     position: 'absolute',

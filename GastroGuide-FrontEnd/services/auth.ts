@@ -38,7 +38,7 @@ export const authService = {
   },
 
   async logout() {
-    await storage.clearTokens();
+    await storage.clearSession();
   },
 
   async isAuthenticated() {

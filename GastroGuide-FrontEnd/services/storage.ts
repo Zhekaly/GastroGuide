@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ACCESS_KEY = 'access_token';
 const REFRESH_KEY = 'refresh_token';
+const ONBOARDED_KEY = 'onboarded';
 
 export const storage = {
   async setTokens(access: string, refresh: string) {
@@ -21,5 +22,9 @@ export const storage = {
 
   async clearTokens() {
     await AsyncStorage.multiRemove([ACCESS_KEY, REFRESH_KEY]);
+  },
+
+  async clearSession() {
+    await AsyncStorage.multiRemove([ACCESS_KEY, REFRESH_KEY, ONBOARDED_KEY]);
   },
 };

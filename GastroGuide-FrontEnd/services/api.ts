@@ -1,9 +1,42 @@
 import { storage } from './storage';
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 
-const BASE_URL = 'http://192.168.1.194:8000/api/v1';
-//const BASE_URL = 'http://192.168.1.78:8000/api/v1'; // HOME
-// const BASE_URL = 'http://127.0.0.1:8000/api/v1'; // LOCAL
-// const BASE_URL = 'http://10.202.10.196:8000/api/v1'; // STUDY
+function getExpoHost() {
+  const constants = Constants as typeof Constants & {
+    manifest?: { debuggerHost?: string };
+    manifest2?: {
+      extra?: {
+        expoGo?: { debuggerHost?: string };
+        expoClient?: { hostUri?: string };
+      };
+    };
+  };
+
+  const hostUri =
+    Constants.expoConfig?.hostUri ??
+    constants.manifest?.debuggerHost ??
+    constants.manifest2?.extra?.expoGo?.debuggerHost ??
+    constants.manifest2?.extra?.expoClient?.hostUri;
+
+  if (!hostUri) return null;
+
+  const host = hostUri.replace(/^[a-zA-Z]+:\/\//, '').split(':')[0];
+  return host || null;
+}
+
+function getDefaultApiUrl() {
+  if (Platform.OS === 'web') {
+    return 'http://127.0.0.1:8000/api/v1';
+  }
+
+  const expoHost = getExpoHost();
+  return expoHost
+    ? `http://${expoHost}:8000/api/v1`
+    : 'http://10.50.75.126:8000/api/v1';
+}
+
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? getDefaultApiUrl();
 
 async function request<T = any>(
   url: string,

@@ -102,8 +102,15 @@ export default function ProfileScreen() {
         text: 'Выйти',
         style: 'destructive',
         onPress: async () => {
-          await authService.logout();
-          router.replace('/onboarding');
+          try {
+            await authService.logout();
+          } finally {
+            setIsGuest(true);
+            setProfile(null);
+            setStats(null);
+            setFavorites([]);
+            router.replace('/onboarding');
+          }
         },
       },
     ]);

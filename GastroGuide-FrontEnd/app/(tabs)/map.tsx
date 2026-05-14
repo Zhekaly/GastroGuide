@@ -4,8 +4,8 @@
 
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import { router } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
   // Image,
@@ -46,6 +46,10 @@ const C = {
 };
 
 const FILTERS = ['Все', 'Открыто', 'Рядом', 'Топ'];
+
+function getParamValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
 
 function buildMapHTML(
   restaurants: Restaurant[],
@@ -138,6 +142,7 @@ function buildMapHTML(
 
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ restaurantId?: string; buildRoute?: string }>();
   const webViewRef = useRef<any>(null);
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
@@ -241,8 +246,11 @@ export default function MapScreen() {
     return true;
   });
 
+  const routeRestaurantVisible = !!selected && (routeCoords !== null || routeLoading);
+  const mapRestaurants = routeRestaurantVisible ? [selected] : filtered;
+
   const mapHTML = buildMapHTML(
-    filtered,
+    mapRestaurants,
     selected?.id ?? null,
     routeCoords,
     travelMode,
@@ -268,7 +276,7 @@ export default function MapScreen() {
     } catch {}
   };
 
-  const buildRoute = async (dest: Restaurant, mode: string) => {
+  const buildRoute = useCallback(async (dest: Restaurant, mode: string) => {
     if (typeof dest.lat !== 'number' || typeof dest.lng !== 'number') return;
 
     setRouteLoading(true);
@@ -308,7 +316,39 @@ export default function MapScreen() {
     } finally {
       setRouteLoading(false);
     }
-  };
+  }, [userCoords]);
+
+  useEffect(() => {
+    const routeRestaurantIdParam = getParamValue(params.restaurantId);
+    const shouldBuildRoute = getParamValue(params.buildRoute) === '1';
+    const routeRestaurantId = Number(routeRestaurantIdParam);
+
+    if (
+      !shouldBuildRoute ||
+      !Number.isFinite(routeRestaurantId) ||
+      !locationReady ||
+      restaurants.length === 0
+    ) {
+      return;
+    }
+
+    const found = restaurants.find(item => item.id === routeRestaurantId);
+    if (!found) return;
+
+    setActiveFilter('Все');
+    setSelected(found);
+    setRouteCoords(null);
+    setRouteInfo(null);
+    buildRoute(found, travelMode);
+    router.setParams({ restaurantId: undefined, buildRoute: undefined } as any);
+  }, [
+    buildRoute,
+    locationReady,
+    params.buildRoute,
+    params.restaurantId,
+    restaurants,
+    travelMode,
+  ]);
 
   const switchMode = (mode: 'foot-walking' | 'driving-car') => {
     setTravelMode(mode);
@@ -381,7 +421,7 @@ export default function MapScreen() {
 
       <View style={s.counter}>
         <Ionicons name="location" size={11} color={C.muted} />
-        <Text style={s.counterText}>{filtered.length} мест</Text>
+        <Text style={s.counterText}>{mapRestaurants.length} мест</Text>
       </View>
 
       <View style={s.bottomSheet}>
