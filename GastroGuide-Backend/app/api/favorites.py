@@ -24,7 +24,10 @@ def get_favorites(
     favorites = (
         db.query(Restaurant)
         .join(Favorite, Favorite.restaurant_id == Restaurant.id)
-        .filter(Favorite.user_id == current_user.id)
+        .filter(
+            Favorite.user_id == current_user.id,
+            Restaurant.is_hidden.is_(False),
+        )
         .all()
     )
 
@@ -37,7 +40,11 @@ def add_favorite(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    restaurant = db.query(Restaurant).filter(Restaurant.id == restaurant_id).first()
+    restaurant = (
+        db.query(Restaurant)
+        .filter(Restaurant.id == restaurant_id, Restaurant.is_hidden.is_(False))
+        .first()
+    )
     if not restaurant:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

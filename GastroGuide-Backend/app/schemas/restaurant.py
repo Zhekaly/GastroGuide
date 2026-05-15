@@ -60,5 +60,6 @@ class RestaurantShortResponse(BaseModel):
     type: str
     rating: float | None
     dist: str | None
+    photos: list[str]
 
     model_config = ConfigDict(from_attributes=True)

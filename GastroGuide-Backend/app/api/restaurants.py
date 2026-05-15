@@ -106,7 +106,16 @@ def get_restaurant_menu(restaurant_id: int, db: Session = Depends(get_db)):
 
 @router.get("/{restaurant_id}/offer")
 def get_restaurant_offer(restaurant_id: int, db: Session = Depends(get_db)):
-    offers = db.query(Offer).filter(Offer.restaurant_id == restaurant_id).all()
+    offers = (
+        db.query(Offer)
+        .join(Restaurant, Restaurant.id == Offer.restaurant_id)
+        .filter(
+            Offer.restaurant_id == restaurant_id,
+            Offer.active.is_(True),
+            Restaurant.is_hidden.is_(False),
+        )
+        .all()
+    )
     return offers
 
 @router.get("/{restaurant_id}", response_model=RestaurantResponse)

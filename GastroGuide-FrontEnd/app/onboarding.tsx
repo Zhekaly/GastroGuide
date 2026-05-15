@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
   Alert,
@@ -61,9 +61,20 @@ const SLIDES = [
 
 type Screen = 'slides' | 'auth' | 'login' | 'register';
 
+function getInitialScreen(value: string | string[] | undefined): Screen {
+  const screen = Array.isArray(value) ? value[0] : value;
+
+  if (screen === 'auth' || screen === 'login' || screen === 'register') {
+    return screen;
+  }
+
+  return 'slides';
+}
+
 export default function OnboardingScreen() {
   const [idx, setIdx] = useState(0);
-  const [screen, setScreen] = useState<Screen>('slides');
+  const params = useLocalSearchParams<{ screen?: string | string[] }>();
+  const [screen, setScreen] = useState<Screen>(() => getInitialScreen(params.screen));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');

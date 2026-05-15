@@ -154,7 +154,10 @@ export default function ProfileScreen() {
           </Text>
 
           {isGuest ? (
-            <TouchableOpacity style={s.editBtn} onPress={() => router.push('/onboarding')}>
+            <TouchableOpacity
+              style={s.editBtn}
+              onPress={() => router.push({ pathname: '/onboarding', params: { screen: 'auth' } })}
+            >
               <Feather name="edit-2" size={12} color={C.accent} style={{ marginRight: 6 }} />
               <Text style={s.editBtnText}>Войти / Зарегистрироваться</Text>
             </TouchableOpacity>

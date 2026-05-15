@@ -14,6 +14,7 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -124,15 +125,17 @@ function buildMapHTML(
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body, #map { width: 100%; height: 100%; }
     .leaflet-control-attribution { display: none; }
-    .leaflet-control-zoom { border: none !important; margin-right: 10px !important; margin-bottom: 10px !important; }
+    .leaflet-bottom.leaflet-right { bottom: 14px !important; right: 14px !important; }
+    .leaflet-control-zoom { border: none !important; margin: 0 !important; }
     .leaflet-control-zoom a { width: 36px !important; height: 36px !important; line-height: 36px !important; border-radius: 10px !important; font-size: 18px !important; color: #1A1208 !important; border: 1.5px solid #EDE5D8 !important; background: rgba(253,248,242,0.96) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important; }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <script>
-    var map = L.map('map', { center: [${userCoords[0]}, ${userCoords[1]}], zoom: 13, zoomControl: true });
+    var map = L.map('map', { center: [${userCoords[0]}, ${userCoords[1]}], zoom: 13, zoomControl: false });
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19 }).addTo(map);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     var userIcon = L.divIcon({
       className: '',
@@ -170,6 +173,7 @@ export default function MapScreen() {
   const [routeInfo, setRouteInfo] = useState<{ dist: string; time: string } | null>(null);
   const [userCoords, setUserCoords] = useState<[number, number]>(FALLBACK_COORDS);
   const [locationReady, setLocationReady] = useState(false);
+  const [mapQuery, setMapQuery] = useState('');
 
   // useEffect(() => {
   //   const loadInitialData = async () => {
@@ -252,12 +256,23 @@ export default function MapScreen() {
     loadInitialData();
   }, []);
 
-  const filtered = restaurants.filter(r => {
+  const filteredByStatus = restaurants.filter(r => {
     if (activeFilter === 'Открыто') return r.open;
     // if (activeFilter === 'Рядом') return parseInt(r.dist) < 700;
     if (activeFilter === 'Рядом') return parseDistanceToMeters(r.dist) < 700;
     if (activeFilter === 'Топ') return r.rating >= 4.7;
     return true;
+  });
+
+  const filtered = filteredByStatus.filter(r => {
+    const query = mapQuery.trim().toLowerCase();
+    if (!query) return true;
+
+    return (
+      r.name.toLowerCase().includes(query) ||
+      r.type.toLowerCase().includes(query) ||
+      r.tag.toLowerCase().includes(query)
+    );
   });
 
   const routeRestaurantVisible = !!selected && (routeCoords !== null || routeLoading);
@@ -395,10 +410,35 @@ export default function MapScreen() {
       <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
 
       <View style={[s.topBar, { top: insets.top + 12 }]}>
-        <TouchableOpacity style={s.searchBar} onPress={() => router.push('/(tabs)/search')}>
+        <View style={s.searchBar}>
           <Ionicons name="search-outline" size={15} color={C.muted} />
-          <Text style={s.searchPlaceholder}>Найти место...</Text>
-        </TouchableOpacity>
+          <TextInput
+            style={s.searchInput}
+            placeholder="Найти место..."
+            placeholderTextColor={C.muted}
+            value={mapQuery}
+            onChangeText={text => {
+              setMapQuery(text);
+              setSelected(null);
+              setRouteCoords(null);
+              setRouteInfo(null);
+            }}
+            autoCorrect={false}
+          />
+          {mapQuery.length > 0 && (
+            <TouchableOpacity
+              onPress={() => {
+                setMapQuery('');
+                setSelected(null);
+                setRouteCoords(null);
+                setRouteInfo(null);
+              }}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="close" size={16} color={C.muted} />
+            </TouchableOpacity>
+          )}
+        </View>
         <TouchableOpacity style={s.aiPill} onPress={() => router.push('/(tabs)/ai')}>
           <MaterialCommunityIcons name="star-four-points" size={12} color="#fff" />
           <Text style={s.aiPillText}>AI</Text>
@@ -612,7 +652,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 11,
     shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
   },
-  searchPlaceholder: { fontSize: 13, color: C.muted },
+  searchInput: { flex: 1, fontSize: 13, color: C.dark, paddingVertical: 0 },
   aiPill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     backgroundColor: C.accent, borderRadius: 14,
