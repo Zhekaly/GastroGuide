@@ -21,6 +21,7 @@ from app.api.profile import router as profile_router
 from app.api.ai_history import router as ai_history_router
 from app.api.reviews import router as reviews_router
 from app.api.categories import router as categories_router
+from app.api.chat import router as chat_router
 
 # Admin routers
 from app.api.admin.auth import router as admin_auth_router
@@ -70,6 +71,7 @@ app.include_router(profile_router)
 app.include_router(ai_history_router)
 app.include_router(reviews_router)
 app.include_router(categories_router)
+app.include_router(chat_router, prefix="/api/v1")
 
 # Admin-панель
 app.include_router(admin_auth_router)

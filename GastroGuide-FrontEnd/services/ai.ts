@@ -28,13 +28,39 @@ export async function sendAIMessage(
   sessionId?: string | null,
   coords?: {lat: number, lng: number} | null
 ) {
-  return apiPost<{ response: string }>('/ai/chat', {
+  const response = await apiPost<{
+    answer: string;
+    session_id: number | null;
+    intent: string;
+    intent_confidence: number;
+    recommended_ids: number[];
+  }>('/chat', {
     message,
-    history,
-    session_id: sessionId ?? null,
+    session_id: sessionId ? Number(sessionId) : null,
     lat: coords?.lat ?? null,
     lng: coords?.lng ?? null,
   }, false);
+
+  return {
+    response: response.answer,
+  };
+}
+
+export type ChatResponse = {
+  answer: string;
+  session_id: number | null;
+  intent: string;
+  intent_confidence: number;
+  recommended_ids: number[];
+};
+
+export async function sendChatMessage(params: {
+  message: string;
+  session_id?: number | null;
+  lat?: number | null;
+  lng?: number | null;
+}): Promise<ChatResponse> {
+  return apiPost<ChatResponse>('/chat', params, false);
 }
 
 export async function getAISessions() {
