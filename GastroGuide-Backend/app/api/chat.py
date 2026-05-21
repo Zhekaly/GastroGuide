@@ -24,12 +24,27 @@ class ChatRequest(BaseModel):
     lng: Optional[float] = None
 
 
+class RestaurantCard(BaseModel):
+    id: int
+    name: str
+    tag: Optional[str] = None
+    rating: float
+    category: Optional[str] = None
+    distance: Optional[str] = None
+    photo: Optional[str] = None
+    emoji: Optional[str] = None
+    color: Optional[str] = None
+    price: Optional[str] = None
+    is_open: bool = False
+
+
 class ChatResponse(BaseModel):
     answer: str
     session_id: Optional[str]
     intent: str
     intent_confidence: float
     recommended_ids: list[int]
+    recommended_restaurants: list[RestaurantCard] = []
 
 
 @router.post("", response_model=ChatResponse)
@@ -90,4 +105,5 @@ async def chat(
         intent=result["intent"],
         intent_confidence=result["intent_confidence"],
         recommended_ids=result["recommended_ids"],
+        recommended_restaurants=result.get("recommended_restaurants", []),
     )

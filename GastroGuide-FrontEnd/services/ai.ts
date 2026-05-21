@@ -5,6 +5,20 @@ export type AIHistoryMessage = {
   text: string;
 };
 
+export type RestaurantCard = {
+  id: number;
+  name: string;
+  tag: string | null;
+  rating: number;
+  category: string | null;
+  distance: string | null;
+  photo: string | null;
+  emoji: string | null;
+  color: string | null;
+  price: string | null;
+  is_open: boolean;
+};
+
 export type AISession = {
   id: string;
   user_id: number;
@@ -28,12 +42,13 @@ export async function sendAIMessage(
   sessionId?: string | null,
   coords?: {lat: number, lng: number} | null
 ) {
-  const response = await apiPost<{
+  const r = await apiPost<{
     answer: string;
     session_id: number | null;
     intent: string;
     intent_confidence: number;
     recommended_ids: number[];
+    recommended_restaurants: RestaurantCard[];
   }>('/chat', {
     message,
     session_id: sessionId ? Number(sessionId) : null,
@@ -42,7 +57,8 @@ export async function sendAIMessage(
   }, false);
 
   return {
-    response: response.answer,
+    response: r.answer,
+    cards: r.recommended_restaurants ?? [],
   };
 }
 

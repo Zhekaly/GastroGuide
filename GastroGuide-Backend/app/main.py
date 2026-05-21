@@ -2,6 +2,26 @@
 # Здесь создаётся экземпляр FastAPI, подключаются роутеры,
 # настраивается CORS и собирается итоговая конфигурация API.
 
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    datefmt="%H:%M:%S",
+)
+
+# Ensure the ML pipeline logger is always visible at INFO level
+# regardless of uvicorn's root-logger configuration.
+_ml_logger = logging.getLogger("gastroguide.ml")
+_ml_logger.setLevel(logging.INFO)
+if not _ml_logger.handlers:
+    _ml_handler = logging.StreamHandler()
+    _ml_handler.setFormatter(
+        logging.Formatter("%(asctime)s | %(levelname)s | %(message)s", datefmt="%H:%M:%S")
+    )
+    _ml_logger.addHandler(_ml_handler)
+    _ml_logger.propagate = False
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text

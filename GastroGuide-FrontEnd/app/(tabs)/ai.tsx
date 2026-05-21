@@ -16,6 +16,8 @@ import {
   Vibration,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -26,6 +28,7 @@ import {
   getAISessions,
   sendAIMessage,
   deleteAISession,
+  RestaurantCard as RestaurantCardType,
 } from '../../services/ai';
 import { getOffers, Offer } from '../../services/offers';
 import * as Location from 'expo-location';
@@ -51,6 +54,7 @@ type Msg = {
   role: 'ai' | 'user';
   text: string;
   time: string;
+  cards?: RestaurantCardType[];
 };
 
 type Session = {
@@ -136,6 +140,75 @@ function BoldText({ text, isUser }: { text: string; isUser: boolean }) {
           : p
       )}
     </Text>
+  );
+}
+
+// ─── RestaurantCard ───────────────────────────────────────────────────────────
+
+function RestaurantCardItem({ card }: { card: RestaurantCardType }) {
+  const [imgError, setImgError] = useState(false);
+  const showPlaceholder = !card.photo || imgError;
+
+  return (
+    <TouchableOpacity
+      style={rc.card}
+      activeOpacity={0.82}
+      onPress={() => router.push({ pathname: '/detail', params: { id: card.id } })}
+      accessibilityLabel={`${card.name}${card.tag ? ', ' + card.tag : ''}`}
+    >
+      {/* Thumbnail with tag badge overlay */}
+      <View style={rc.thumbWrapper}>
+        {showPlaceholder ? (
+          <View style={[rc.thumb, { backgroundColor: card.color ?? '#E8420A' }]}>
+            <Text style={rc.thumbEmoji}>{card.emoji ?? '🍽️'}</Text>
+          </View>
+        ) : (
+          <Image
+            source={{ uri: card.photo! }}
+            style={rc.thumb}
+            contentFit="cover"
+            onError={() => setImgError(true)}
+          />
+        )}
+        {card.tag ? (
+          <View style={rc.tagBadge}>
+            <Text style={rc.tagText} numberOfLines={1}>{card.tag}</Text>
+          </View>
+        ) : null}
+      </View>
+
+      {/* Info */}
+      <View style={rc.info}>
+        <Text style={rc.name} numberOfLines={2}>
+          {card.name}
+        </Text>
+
+        <View style={rc.row}>
+          <Text style={rc.ratingText}>
+            {card.rating === 0 ? '⭐ новый' : `${card.rating}★`}
+          </Text>
+          {card.distance ? (
+            <Text style={rc.meta}> · {card.distance}</Text>
+          ) : null}
+        </View>
+
+        <View style={rc.row}>
+          {card.category ? (
+            <Text style={rc.meta}>{card.category}</Text>
+          ) : null}
+          {card.price ? (
+            <Text style={rc.meta}> · {card.price}</Text>
+          ) : null}
+        </View>
+
+        <View style={[rc.openBadge, { backgroundColor: card.is_open ? '#E8F5E9' : '#FFEBEE' }]}>
+          <View style={[rc.dot, { backgroundColor: card.is_open ? '#2E7D32' : '#D32F2F' }]} />
+          <Text style={[rc.openText, { color: card.is_open ? '#2E7D32' : '#D32F2F' }]}>
+            {card.is_open ? 'Открыто' : 'Закрыто'}
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
   );
 }
 
@@ -338,6 +411,7 @@ function mapBackendMessagesToUi(messages: {
       hour: '2-digit',
       minute: '2-digit',
     }),
+    cards: [],
   }));
 }
 
@@ -646,6 +720,7 @@ export default function AIScreen() {
         role: 'ai',
         text: response.response,
         time: nowTime(),
+        cards: response.cards,
       };
 
       const finalMsgs = [...nextMsgs, aiMsg];
@@ -678,6 +753,7 @@ export default function AIScreen() {
             role: 'ai',
             text: response.response,
             time: nowTime(),
+            cards: response.cards,
           };
 
           const finalMsgs = [...nextMsgs, aiMsg];
@@ -781,6 +857,7 @@ export default function AIScreen() {
             {messages.map((m, idx) => {
               const isUser = m.role === 'user';
               const showTime = idx === messages.length - 1 || messages[idx + 1]?.role !== m.role;
+              const hasCards = !isUser && m.cards && m.cards.length > 0;
               return (
                 <View key={m.id} style={{ marginBottom: 2 }}>
                   <View style={[ch.msgRow, isUser ? ch.rowUser : ch.rowAI]}>
@@ -793,6 +870,19 @@ export default function AIScreen() {
                       <View style={[ch.bubble, isUser ? ch.bubbleUser : ch.bubbleAI]}>
                         <BoldText text={m.text} isUser={isUser} />
                       </View>
+                      {hasCards && (
+                        <ScrollView
+                          horizontal
+                          showsHorizontalScrollIndicator={false}
+                          style={ch.cardsScroll}
+                          contentContainerStyle={ch.cardsRow}
+                          keyboardShouldPersistTaps="handled"
+                        >
+                          {m.cards!.map(card => (
+                            <RestaurantCardItem key={card.id} card={card} />
+                          ))}
+                        </ScrollView>
+                      )}
                       {showTime && <Text style={ch.timeText}>{m.time}</Text>}
                     </View>
                   </View>
@@ -1064,4 +1154,100 @@ const ch = StyleSheet.create({
   },
   drawerFooterText: { fontSize: 10, color: C.accent, fontWeight: '700' },
   drawerFooterSub: { fontSize: 10, color: C.drawerMuted, marginLeft: 2 },
+
+  // Cards row
+  cardsScroll: { marginTop: 10, marginLeft: -4 },
+  cardsRow: { gap: 10, paddingRight: 8 },
+});
+
+// ─── RestaurantCard styles ─────────────────────────────────────────────────────
+
+const rc = StyleSheet.create({
+  card: {
+    width: 180,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#EDE5D8',
+    shadowColor: '#000',
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    elevation: 3,
+    overflow: 'hidden',
+  },
+  thumbWrapper: {
+    width: '100%',
+    height: 100,
+    position: 'relative',
+    overflow: 'hidden',
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
+  },
+  thumb: {
+    width: '100%',
+    height: 100,
+    backgroundColor: '#EDE5D8',
+  },
+  thumbEmoji: {
+    fontSize: 36,
+    textAlign: 'center',
+    lineHeight: 100,
+  },
+  tagBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    backgroundColor: 'rgba(0,0,0,0.58)',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    maxWidth: 130,
+  },
+  tagText: {
+    fontSize: 11,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  info: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 3,
+  },
+  name: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1A1208',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ratingText: {
+    fontSize: 11,
+    color: '#8C7B6B',
+    fontWeight: '600',
+  },
+  meta: {
+    fontSize: 11,
+    color: '#8C7B6B',
+  },
+  openBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  openText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
 });

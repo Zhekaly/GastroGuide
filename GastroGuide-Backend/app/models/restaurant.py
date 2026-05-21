@@ -78,4 +78,10 @@ class Restaurant(Base):
         onupdate=lambda: datetime.now(timezone.utc),
     )
 
+    mood_tags: Mapped[list[str] | None] = mapped_column(
+        ARRAY(String),
+        nullable=True,
+        default=None,
+    )
+
     menu = relationship("MenuItem", back_populates="restaurant", cascade="all, delete-orphan")

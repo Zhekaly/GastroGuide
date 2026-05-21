@@ -12,7 +12,8 @@
       "Bash(python3 -m json.tool)",
       "Bash(curl -s -X POST http://localhost:8000/api/v1/chat -H 'Content-Type: application/json' -d '{\"message\": \"что рядом\", \"lat\": 51.128, \"lng\": 71.430}')",
       "Bash(curl -s -X POST http://localhost:8000/api/v1/chat -H 'Content-Type: application/json' -d '{\"message\": \"куда сходить с девушкой\", \"lat\": 51.128, \"lng\": 71.430}')",
-      "Bash(curl -s -X POST http://localhost:8000/api/v1/chat -H 'Content-Type: application/json' -d '{\"message\": \"где скидки\"}')"
+      "Bash(curl -s -X POST http://localhost:8000/api/v1/chat -H 'Content-Type: application/json' -d '{\"message\": \"где скидки\"}')",
+      "Bash(grep -E '\\\\.\\(tsx|ts|js\\)$')"
     ]
   }
 }
