@@ -65,6 +65,12 @@ def login_user(request: UserLoginRequest, db: Session = Depends(get_db)):
             detail="Invalid email or password",
         )
 
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Аккаунт заблокирован. Обратитесь к администратору.",
+        )
+
     access_token = create_access_token(
         subject=user.id,
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
@@ -109,6 +115,12 @@ def refresh_access_token(request: RefreshTokenRequest, db: Session = Depends(get
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Аккаунт заблокирован",
         )
 
     access_token = create_access_token(
