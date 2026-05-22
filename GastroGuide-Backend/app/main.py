@@ -32,7 +32,6 @@ from app.core.db_maintenance import sync_id_sequences
 from app.models import Restaurant
 from app.api.restaurants import router as restaurants_router
 from app.api.offers import router as offers_router
-from app.api.ai import router as ai_router
 from app.api.routes import router as routes_router
 from app.api.auth import router as auth_router
 from app.api.users import router as users_router
@@ -82,7 +81,6 @@ def on_startup():
 # Публичные / клиентские роутеры (мобильное приложение)
 app.include_router(restaurants_router)
 app.include_router(offers_router)
-app.include_router(ai_router)
 app.include_router(routes_router)
 app.include_router(auth_router)
 app.include_router(users_router)
