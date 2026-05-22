@@ -19,7 +19,7 @@ class AdminTokenResponse(BaseModel):
 class AdminMeResponse(BaseModel):
     id: int
     name: str
-    email: EmailStr
+    email: str
     role: str
     is_active: bool
     city: str

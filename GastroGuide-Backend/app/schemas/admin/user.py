@@ -2,13 +2,13 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AdminUserListItem(BaseModel):
     id: int
     name: str
-    email: EmailStr
+    email: str
     city: str
     role: str
     is_active: bool

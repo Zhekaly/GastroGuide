@@ -35,7 +35,7 @@ class TokenResponse(BaseModel):
 class UserResponse(BaseModel):
     id: int
     name: str
-    email: EmailStr
+    email: str
     city: str
     created_at: datetime
 
