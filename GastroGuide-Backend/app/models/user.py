@@ -50,7 +50,7 @@ class User(Base):
     )
 
     favorites = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")
-    reviews = relationship("Review", back_populates="user")
+    reviews = relationship("Review", back_populates="user", cascade="all, delete-orphan")
     ai_chat_sessions = relationship("AIChatSession", back_populates="user", cascade="all, delete-orphan")
 
     @property
