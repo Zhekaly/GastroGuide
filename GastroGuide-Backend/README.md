@@ -30,7 +30,7 @@ Backend часть мобильного приложения **GastroGuide** —
 - Alembic
 - Pydantic
 - Uvicorn
-- Google Gemini API
+- scikit-learn — локальная ML-модель AI-чата
 - OpenRouteService API
 
 ## Структура проекта
@@ -92,7 +92,6 @@ CREATE DATABASE gastroguide_db;
 
 ```env
 DATABASE_URL=postgresql+psycopg2://postgres:your_password@localhost:5432/gastroguide_db
-GEMINI_API_KEY=your_gemini_api_key
 ORS_API_KEY=your_openrouteservice_api_key
 
 SECRET_KEY=super_secret_key_change_me_123456789
@@ -298,7 +297,7 @@ POST /api/v1/auth/register
 
 ### AI
 
-* `POST /api/v1/ai/chat`
+* `POST /api/v1/chat`
 * `GET /api/v1/ai/sessions`
 * `POST /api/v1/ai/sessions`
 * `GET /api/v1/ai/sessions/{session_id}/messages`

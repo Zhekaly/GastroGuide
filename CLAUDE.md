@@ -47,7 +47,6 @@ All models must be imported in `alembic/env.py` for autogenerate to detect them.
 
 ```
 DATABASE_URL=postgresql://...
-GEMINI_API_KEY=...        # legacy, kept but unused by active pipeline
 ORS_API_KEY=...           # OpenRouteService for map routing
 SECRET_KEY=...
 ALGORITHM=HS256
@@ -61,7 +60,7 @@ R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_BUCKET / R2_PUBLIC_
 
 Public (mobile) routes are registered in `app/main.py` with prefix `/api/v1`. Admin routes live under `app/api/admin/` and have their own auth.
 
-The **active AI endpoint** is `POST /api/v1/chat` (`app/api/chat.py`). `app/api/ai.py` and `app/services/ai_service.py` are deprecated Gemini wrappers — **do not touch them**.
+The **active AI endpoint** is `POST /api/v1/chat` (`app/api/chat.py`). The AI chat runs entirely on the local ML pipeline in `app/ml/` — no external LLM API is used.
 
 JWT auth: `Bearer` access tokens, verified in `app/api/deps.py`. Use `get_current_user` for required auth and `get_optional_user` for optional auth (e.g. the chat endpoint personalises results when a user is logged in but still works anonymously).
 

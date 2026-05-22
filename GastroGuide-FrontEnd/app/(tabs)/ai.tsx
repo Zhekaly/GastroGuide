@@ -369,7 +369,7 @@ function Drawer({
         <View style={[ch.drawerFooter, { paddingBottom: insets.bottom + 12 }]}>
           <View style={ch.drawerFooterBadge}>
             <MaterialCommunityIcons name="star-four-points" size={10} color={C.accent} />
-            <Text style={ch.drawerFooterText}>Gemini AI</Text>
+            <Text style={ch.drawerFooterText}>AI-помощник</Text>
           </View>
           <Text style={ch.drawerFooterSub}>GastroGuide · Астана</Text>
         </View>
