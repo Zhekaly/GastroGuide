@@ -33,7 +33,7 @@ function getDefaultApiUrl() {
   const expoHost = getExpoHost();
   return expoHost
     ? `http://${expoHost}:8000/api/v1`
-    : 'http://10.50.75.126:8000/api/v1';
+    : 'http://CONFIGURE_API_URL:8000/api/v1';
 }
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? getDefaultApiUrl();
