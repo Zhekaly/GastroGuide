@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from app.api.admin.deps import get_current_admin, log_admin_action
+from app.api.admin.deps import get_current_admin_or_moderator, log_admin_action
 from app.core.database import get_db
 from app.models.user import User
 from app.services.r2_service import R2NotConfiguredError, upload_image
@@ -20,7 +20,7 @@ async def upload_admin_image(
     file: UploadFile = File(...),
     folder: str = "restaurants",
     db: Session = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    actor: User = Depends(get_current_admin_or_moderator),
 ):
     content = await file.read()
 
@@ -43,7 +43,7 @@ async def upload_admin_image(
         raise HTTPException(status_code=400, detail=str(e))
 
     log_admin_action(
-        db, admin,
+        db, actor,
         action="upload.image",
         entity_type="image",
         entity_id=uploaded.key,
