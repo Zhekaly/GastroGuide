@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth/server";
 
 import { Navbar } from "@/components/layout/navbar";
+import { RoleGuard } from "@/components/layout/role-guard";
 import { Sidebar } from "@/components/layout/sidebar";
 
 export default async function DashboardLayout({
@@ -12,6 +13,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen">
+      <RoleGuard />
       <Sidebar />
       <div className="flex flex-1 flex-col min-w-0">
         <Navbar admin={admin} />
