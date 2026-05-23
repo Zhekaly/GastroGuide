@@ -45,6 +45,8 @@ const DEFAULT: OfferInput = {
   active: true,
 };
 
+const TIME_HHMM = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+
 export default function OffersPage() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
@@ -227,19 +229,27 @@ export default function OffersPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Истекает</Label>
+                  <Label>Акция действует до (время)</Label>
                   <Input
-                    placeholder="до 1 июня"
+                    type="time"
                     value={form.expires}
                     onChange={(e) => setForm((prev) => ({ ...prev, expires: e.target.value }))}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Например, 21:00 — акция действует до этого времени каждый день
+                  </p>
                 </div>
               </div>
             </div>
             <DialogFooter>
               <Button
                 onClick={() => createMutation.mutate()}
-                disabled={!form.restaurant_id || !form.title || createMutation.isPending}
+                disabled={
+                  !form.restaurant_id ||
+                  !form.title ||
+                  !TIME_HHMM.test(form.expires) ||
+                  createMutation.isPending
+                }
               >
                 Создать
               </Button>
