@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Pencil, ShieldCheck, ShieldOff, Trash2 } from "lucide-react";
+import { Pencil, Shield, ShieldCheck, ShieldOff, Trash2, User as UserIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -75,11 +75,44 @@ export default function UsersPage() {
       {
         accessorKey: "role",
         header: "Роль",
-        cell: ({ row }) => (
-          <Badge variant={row.original.role === "admin" ? "default" : "secondary"}>
-            {row.original.role}
-          </Badge>
-        ),
+        cell: ({ row }) => {
+          const u = row.original;
+          if (u.role === "admin") {
+            return (
+              <Badge variant="success" className="gap-1">
+                <ShieldCheck className="h-3 w-3" /> Админ
+              </Badge>
+            );
+          }
+          if (u.role === "moderator") {
+            const rests = u.moderated_restaurants ?? [];
+            const names = rests.map((r) => r.name).join(", ");
+            const summary =
+              rests.length === 0
+                ? "Без заведений"
+                : rests.length === 1
+                  ? rests[0]!.name
+                  : `${rests.length} заведения`;
+            return (
+              <div className="space-y-0.5" title={names || undefined}>
+                <Badge variant="warning" className="gap-1">
+                  <Shield className="h-3 w-3" /> Модератор
+                </Badge>
+                <div
+                  className="text-xs text-muted-foreground truncate max-w-[180px]"
+                  title={names || undefined}
+                >
+                  {summary}
+                </div>
+              </div>
+            );
+          }
+          return (
+            <Badge variant="secondary" className="gap-1">
+              <UserIcon className="h-3 w-3" /> Пользователь
+            </Badge>
+          );
+        },
       },
       {
         accessorKey: "is_active",
@@ -200,6 +233,7 @@ export default function UsersPage() {
               <SelectContent>
                 <SelectItem value="all">Все роли</SelectItem>
                 <SelectItem value="admin">Админы</SelectItem>
+                <SelectItem value="moderator">Модераторы</SelectItem>
                 <SelectItem value="user">Пользователи</SelectItem>
               </SelectContent>
             </Select>
