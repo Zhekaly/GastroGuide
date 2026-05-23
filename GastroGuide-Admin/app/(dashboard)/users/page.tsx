@@ -120,14 +120,20 @@ export default function UsersPage() {
                   ? "Сделать пользователем"
                   : "Сделать админом"
               }
-              onClick={() =>
-                updateMutation.mutate({
-                  id: row.original.id,
-                  data: {
-                    role: row.original.role === "admin" ? "user" : "admin",
-                  },
-                })
-              }
+              onClick={() => {
+                const message =
+                  row.original.role === "admin"
+                    ? `Снять с ${row.original.email} права администратора?`
+                    : `Назначить пользователя ${row.original.email} админом?`;
+                if (confirm(message)) {
+                  updateMutation.mutate({
+                    id: row.original.id,
+                    data: {
+                      role: row.original.role === "admin" ? "user" : "admin",
+                    },
+                  });
+                }
+              }}
             >
               <UserCog className="h-4 w-4" />
             </Button>
@@ -135,12 +141,17 @@ export default function UsersPage() {
               variant="ghost"
               size="icon"
               title={row.original.is_active ? "Заблокировать" : "Разблокировать"}
-              onClick={() =>
-                updateMutation.mutate({
-                  id: row.original.id,
-                  data: { is_active: !row.original.is_active },
-                })
-              }
+              onClick={() => {
+                const message = row.original.is_active
+                  ? `Заблокировать пользователя ${row.original.email}? Он не сможет войти в приложение.`
+                  : `Разблокировать пользователя ${row.original.email}?`;
+                if (confirm(message)) {
+                  updateMutation.mutate({
+                    id: row.original.id,
+                    data: { is_active: !row.original.is_active },
+                  });
+                }
+              }}
             >
               {row.original.is_active ? (
                 <ShieldOff className="h-4 w-4 text-amber-500" />
