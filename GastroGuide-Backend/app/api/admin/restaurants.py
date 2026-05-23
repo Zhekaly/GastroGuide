@@ -6,7 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import inspect as sa_inspect, or_
 from sqlalchemy.orm import Session, selectinload
 
-from app.api.admin.deps import get_current_admin, log_admin_action
+from app.api.admin.deps import (
+    check_restaurant_access,
+    get_current_admin,
+    get_current_admin_or_moderator,
+    log_admin_action,
+)
 from app.core.database import get_db
 from app.models.category import Category
 from app.models.restaurant import Restaurant
@@ -49,7 +54,7 @@ def _serialize_response(restaurant: Restaurant) -> AdminRestaurantResponse:
 @router.get("", response_model=PaginatedResponse[AdminRestaurantListItem])
 def list_restaurants(
     db: Session = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    actor: User = Depends(get_current_admin_or_moderator),
     q: str | None = Query(default=None, description="Поиск по названию/типу/адресу"),
     category_id: int | None = Query(default=None),
     is_hidden: bool | None = Query(default=None),
@@ -57,6 +62,15 @@ def list_restaurants(
     page_size: int = Query(default=20, ge=1, le=200),
 ):
     query = db.query(Restaurant).options(selectinload(Restaurant.category))
+
+    # Модератор видит только свои заведения.
+    if actor.is_moderator:
+        moderated_ids = [r.id for r in actor.moderated_restaurants]
+        if not moderated_ids:
+            return PaginatedResponse[AdminRestaurantListItem].build(
+                items=[], total=0, page=page, page_size=page_size
+            )
+        query = query.filter(Restaurant.id.in_(moderated_ids))
 
     if q:
         like = f"%{q}%"
@@ -117,8 +131,10 @@ def list_restaurants(
 def get_restaurant(
     restaurant_id: int,
     db: Session = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    actor: User = Depends(get_current_admin_or_moderator),
 ):
+    check_restaurant_access(actor, restaurant_id)
+
     restaurant = (
         db.query(Restaurant)
         .options(selectinload(Restaurant.menu), selectinload(Restaurant.category))
@@ -200,13 +216,18 @@ def create_restaurant(
     return _serialize_response(restaurant)
 
 
+MODERATOR_FORBIDDEN_RESTAURANT_FIELDS = {"is_hidden", "category_id"}
+
+
 @router.patch("/{restaurant_id}", response_model=AdminRestaurantResponse)
 def update_restaurant(
     restaurant_id: int,
     payload: AdminRestaurantUpdate,
     db: Session = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    actor: User = Depends(get_current_admin_or_moderator),
 ):
+    check_restaurant_access(actor, restaurant_id)
+
     restaurant = (
         db.query(Restaurant)
         .options(selectinload(Restaurant.menu), selectinload(Restaurant.category))
@@ -218,6 +239,14 @@ def update_restaurant(
         raise HTTPException(status_code=404, detail="Restaurant not found")
 
     updates = payload.model_dump(exclude_unset=True, by_alias=False)
+
+    if actor.is_moderator:
+        forbidden = MODERATOR_FORBIDDEN_RESTAURANT_FIELDS & set(updates.keys())
+        if forbidden:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Модератор не может менять поля: {sorted(forbidden)}",
+            )
 
     if "category_id" in updates:
         _validate_category(db, updates["category_id"])
@@ -237,7 +266,7 @@ def update_restaurant(
     db.flush()
 
     log_admin_action(
-        db, admin,
+        db, actor,
         action="restaurant.update",
         entity_type="restaurant",
         entity_id=restaurant.id,
@@ -323,14 +352,16 @@ def delete_restaurant(
 def recalculate_rating(
     restaurant_id: int,
     db: Session = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    actor: User = Depends(get_current_admin_or_moderator),
 ):
+    check_restaurant_access(actor, restaurant_id)
+
     restaurant = recalculate_restaurant_rating(db, restaurant_id)
     if not restaurant:
         raise HTTPException(status_code=404, detail="Restaurant not found")
 
     log_admin_action(
-        db, admin,
+        db, actor,
         action="restaurant.recalculate_rating",
         entity_type="restaurant",
         entity_id=restaurant_id,
