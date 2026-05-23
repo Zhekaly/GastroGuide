@@ -69,7 +69,15 @@ export default function SystemPage() {
         <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
-            onClick={() => resetSequencesMutation.mutate()}
+            onClick={() => {
+              if (
+                confirm(
+                  "Сбросить счётчики БД? Это сбросит автоинкременты после массовых удалений. Действие безопасное, но необратимое.",
+                )
+              ) {
+                resetSequencesMutation.mutate();
+              }
+            }}
             disabled={resetSequencesMutation.isPending}
           >
             <Database className="h-4 w-4" />
@@ -77,7 +85,15 @@ export default function SystemPage() {
           </Button>
           <Button
             variant="outline"
-            onClick={() => recalcMutation.mutate()}
+            onClick={() => {
+              if (
+                confirm(
+                  "Пересчитать рейтинги всех заведений? Это может занять время на больших данных.",
+                )
+              ) {
+                recalcMutation.mutate();
+              }
+            }}
             disabled={recalcMutation.isPending}
           >
             <RefreshCw className="h-4 w-4" />
