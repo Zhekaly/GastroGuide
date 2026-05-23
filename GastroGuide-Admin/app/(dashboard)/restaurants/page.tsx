@@ -2,12 +2,13 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
-import { Eye, EyeOff, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { restaurantsApi } from "@/lib/api/endpoints";
+import { useCurrentActor } from "@/lib/hooks/use-current-actor";
 import type { RestaurantListItem } from "@/lib/api/types";
 import { formatDate } from "@/lib/utils";
 
@@ -27,6 +28,8 @@ import {
 
 export default function RestaurantsPage() {
   const queryClient = useQueryClient();
+  const actor = useCurrentActor();
+  const canManage = actor.isAdmin;
   const [q, setQ] = useState("");
   const [visibility, setVisibility] = useState<"all" | "visible" | "hidden">("all");
   const [page, setPage] = useState(1);
@@ -85,22 +88,28 @@ export default function RestaurantsPage() {
 
   const columns = useMemo<ColumnDef<RestaurantListItem, unknown>[]>(
     () => [
-      {
-        id: "select",
-        header: ({ table }) => (
-          <Checkbox
-            checked={table.getIsAllPageRowsSelected()}
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-          />
-        ),
-        size: 40,
-      },
+      ...(canManage
+        ? [
+            {
+              id: "select",
+              header: ({ table }) => (
+                <Checkbox
+                  checked={table.getIsAllPageRowsSelected()}
+                  onCheckedChange={(value) =>
+                    table.toggleAllPageRowsSelected(!!value)
+                  }
+                />
+              ),
+              cell: ({ row }) => (
+                <Checkbox
+                  checked={row.getIsSelected()}
+                  onCheckedChange={(value) => row.toggleSelected(!!value)}
+                />
+              ),
+              size: 40,
+            } as ColumnDef<RestaurantListItem, unknown>,
+          ]
+        : []),
       {
         accessorKey: "name",
         header: "Название",
@@ -160,32 +169,48 @@ export default function RestaurantsPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => toggleVisibilityMutation.mutate(row.original.id)}
-              title={row.original.is_hidden ? "Показать" : "Скрыть"}
+              asChild
+              title="Открыть карточку"
             >
-              {row.original.is_hidden ? (
-                <Eye className="h-4 w-4" />
-              ) : (
-                <EyeOff className="h-4 w-4" />
-              )}
+              <Link href={`/restaurants/${row.original.id}`}>
+                <Pencil className="h-4 w-4" />
+              </Link>
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                if (confirm(`Удалить "${row.original.name}"?`)) {
-                  deleteMutation.mutate(row.original.id);
+            {canManage && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() =>
+                  toggleVisibilityMutation.mutate(row.original.id)
                 }
-              }}
-              title="Удалить"
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
+                title={row.original.is_hidden ? "Показать" : "Скрыть"}
+              >
+                {row.original.is_hidden ? (
+                  <Eye className="h-4 w-4" />
+                ) : (
+                  <EyeOff className="h-4 w-4" />
+                )}
+              </Button>
+            )}
+            {canManage && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  if (confirm(`Удалить "${row.original.name}"?`)) {
+                    deleteMutation.mutate(row.original.id);
+                  }
+                }}
+                title="Удалить"
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            )}
           </div>
         ),
       },
     ],
-    [toggleVisibilityMutation, deleteMutation],
+    [toggleVisibilityMutation, deleteMutation, canManage],
   );
 
   const items = data?.items ?? [];
@@ -200,12 +225,14 @@ export default function RestaurantsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Заведения</h1>
           <p className="text-muted-foreground">Управление ресторанами GastroGuide</p>
         </div>
-        <Button asChild>
-          <Link href="/restaurants/new">
-            <Plus className="h-4 w-4" />
-            Добавить
-          </Link>
-        </Button>
+        {canManage && (
+          <Button asChild>
+            <Link href="/restaurants/new">
+              <Plus className="h-4 w-4" />
+              Добавить
+            </Link>
+          </Button>
+        )}
       </div>
 
       <Card>
@@ -237,7 +264,7 @@ export default function RestaurantsPage() {
               </SelectContent>
             </Select>
 
-            {selectedIds.length > 0 && (
+            {canManage && selectedIds.length > 0 && (
               <div className="ml-auto flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">
                   Выбрано: {selectedIds.length}
