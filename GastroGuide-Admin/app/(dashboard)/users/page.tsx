@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ShieldCheck, ShieldOff, Trash2, UserCog } from "lucide-react";
+import { Pencil, ShieldCheck, ShieldOff, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -11,6 +11,7 @@ import type { UserAdmin } from "@/lib/api/types";
 import { formatDate } from "@/lib/utils";
 
 import { DataTable } from "@/components/tables/data-table";
+import { UserEditDialog } from "@/components/forms/user-edit-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,8 +27,9 @@ import {
 export default function UsersPage() {
   const queryClient = useQueryClient();
   const [q, setQ] = useState("");
-  const [role, setRole] = useState<"all" | "user" | "admin">("all");
+  const [role, setRole] = useState<"all" | "user" | "admin" | "moderator">("all");
   const [page, setPage] = useState(1);
+  const [editingUser, setEditingUser] = useState<UserAdmin | null>(null);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["users", q, role, page],
@@ -45,7 +47,7 @@ export default function UsersPage() {
       data,
     }: {
       id: number;
-      data: { role?: "user" | "admin"; is_active?: boolean };
+      data: { role?: "user" | "admin" | "moderator"; is_active?: boolean };
     }) => usersApi.update(id, data),
     onSuccess: () => {
       toast.success("Пользователь обновлён");
@@ -115,27 +117,10 @@ export default function UsersPage() {
             <Button
               variant="ghost"
               size="icon"
-              title={
-                row.original.role === "admin"
-                  ? "Сделать пользователем"
-                  : "Сделать админом"
-              }
-              onClick={() => {
-                const message =
-                  row.original.role === "admin"
-                    ? `Снять с ${row.original.email} права администратора?`
-                    : `Назначить пользователя ${row.original.email} админом?`;
-                if (confirm(message)) {
-                  updateMutation.mutate({
-                    id: row.original.id,
-                    data: {
-                      role: row.original.role === "admin" ? "user" : "admin",
-                    },
-                  });
-                }
-              }}
+              title="Редактировать (роль, заведения модератора)"
+              onClick={() => setEditingUser(row.original)}
             >
-              <UserCog className="h-4 w-4" />
+              <Pencil className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
@@ -262,6 +247,14 @@ export default function UsersPage() {
           </div>
         </CardContent>
       </Card>
+
+      <UserEditDialog
+        user={editingUser}
+        open={editingUser !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditingUser(null);
+        }}
+      />
     </div>
   );
 }
