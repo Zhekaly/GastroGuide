@@ -14,19 +14,31 @@ import {
 import Link from "next/link";
 
 import { dashboardApi } from "@/lib/api/endpoints";
+import { useCurrentActor } from "@/lib/hooks/use-current-actor";
 import { formatDate, formatNumber } from "@/lib/utils";
 
+import { ModeratorDashboard } from "@/app/(dashboard)/dashboard/moderator-dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
+  const actor = useCurrentActor();
+
+  // Модератор без прав админа видит свой урезанный лендинг.
+  const showModeratorLanding = !actor.isLoading && actor.isModerator && !actor.isAdmin;
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["dashboard"],
     queryFn: dashboardApi.overview,
+    enabled: !showModeratorLanding && !actor.isLoading,
   });
 
-  if (isLoading) {
+  if (showModeratorLanding) {
+    return <ModeratorDashboard />;
+  }
+
+  if (actor.isLoading || isLoading) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
