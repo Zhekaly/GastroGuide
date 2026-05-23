@@ -112,6 +112,20 @@ export function RestaurantForm({ restaurant, onSuccess }: RestaurantFormProps) {
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+
+    if (!Number.isFinite(form.lat) || !Number.isFinite(form.lng)) {
+      toast.error("Укажите координаты заведения (lat и lng).");
+      return;
+    }
+    if (form.lat < -90 || form.lat > 90) {
+      toast.error("Широта (lat) должна быть в диапазоне от -90 до 90.");
+      return;
+    }
+    if (form.lng < -180 || form.lng > 180) {
+      toast.error("Долгота (lng) должна быть в диапазоне от -180 до 180.");
+      return;
+    }
+
     const payload: RestaurantInput = {
       ...form,
       opens_at: form.is_24_7 ? null : form.opens_at,
@@ -122,6 +136,13 @@ export function RestaurantForm({ restaurant, onSuccess }: RestaurantFormProps) {
     if (restaurant) updateMutation.mutate(payload);
     else createMutation.mutate(payload);
   }
+
+  const latOutsideKZ = form.lat < 40 || form.lat > 56;
+  const lngOutsideKZ = form.lng < 46 || form.lng > 88;
+  const coordsOutsideKZ =
+    Number.isFinite(form.lat) &&
+    Number.isFinite(form.lng) &&
+    (latOutsideKZ || lngOutsideKZ);
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
@@ -232,16 +253,34 @@ export function RestaurantForm({ restaurant, onSuccess }: RestaurantFormProps) {
           <Input
             type="number"
             step="any"
-            value={form.lat}
-            onChange={(e) => update("lat", Number(e.target.value))}
+            min={-90}
+            max={90}
+            required
+            value={Number.isFinite(form.lat) ? form.lat : ""}
+            onChange={(e) => {
+              const v = e.target.value;
+              update("lat", v === "" ? Number.NaN : Number(v));
+            }}
           />
           <Input
             type="number"
             step="any"
-            value={form.lng}
-            onChange={(e) => update("lng", Number(e.target.value))}
+            min={-180}
+            max={180}
+            required
+            value={Number.isFinite(form.lng) ? form.lng : ""}
+            onChange={(e) => {
+              const v = e.target.value;
+              update("lng", v === "" ? Number.NaN : Number(v));
+            }}
           />
         </div>
+        {coordsOutsideKZ && (
+          <p className="text-xs text-amber-600">
+            Внимание: координаты выглядят не казахстанскими (ожидается lat 40..56, lng 46..88).
+            Проверьте правильность.
+          </p>
+        )}
         <MapPicker
           value={{ lat: form.lat, lng: form.lng }}
           onChange={({ lat, lng }) => {
