@@ -29,7 +29,7 @@ export default function UsersPage() {
   const [role, setRole] = useState<"all" | "user" | "admin">("all");
   const [page, setPage] = useState(1);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["users", q, role, page],
     queryFn: () =>
       usersApi.list({
@@ -220,12 +220,21 @@ export default function UsersPage() {
             </Select>
           </div>
 
-          <DataTable
-            data={data?.items ?? []}
-            columns={columns}
-            emptyMessage={isLoading ? "Загрузка..." : "Пользователей нет"}
-            getRowId={(row) => String(row.id)}
-          />
+          {isError ? (
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <p className="text-destructive">Не удалось загрузить пользователей.</p>
+              <Button variant="outline" size="sm" onClick={() => refetch()}>
+                Повторить
+              </Button>
+            </div>
+          ) : (
+            <DataTable
+              data={data?.items ?? []}
+              columns={columns}
+              emptyMessage={isLoading ? "Загрузка..." : "Пользователей нет"}
+              getRowId={(row) => String(row.id)}
+            />
+          )}
 
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Всего: {total}</span>

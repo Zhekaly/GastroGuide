@@ -24,12 +24,20 @@ const ISSUE_LABELS: Record<string, string> = {
 export default function SystemPage() {
   const queryClient = useQueryClient();
 
-  const { data: broken } = useQuery({
+  const {
+    data: broken,
+    isError: brokenError,
+    refetch: refetchBroken,
+  } = useQuery({
     queryKey: ["broken-restaurants"],
     queryFn: systemApi.broken,
   });
 
-  const { data: logs } = useQuery({
+  const {
+    data: logs,
+    isError: logsError,
+    refetch: refetchLogs,
+  } = useQuery({
     queryKey: ["activity-log"],
     queryFn: () => systemApi.activityLog({ page_size: 50 }),
   });
@@ -110,10 +118,18 @@ export default function SystemPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          {broken?.length === 0 && (
+          {brokenError && (
+            <div className="flex flex-col items-center gap-3 py-6 text-center">
+              <p className="text-destructive">Не удалось загрузить список.</p>
+              <Button variant="outline" size="sm" onClick={() => refetchBroken()}>
+                Повторить
+              </Button>
+            </div>
+          )}
+          {!brokenError && broken?.length === 0 && (
             <p className="text-sm text-muted-foreground">Все заведения в порядке.</p>
           )}
-          {broken?.map((item: BrokenRestaurant) => (
+          {!brokenError && broken?.map((item: BrokenRestaurant) => (
             <div
               key={item.restaurant_id}
               className="flex items-center justify-between rounded-md border p-3 flex-wrap gap-2"
@@ -141,10 +157,18 @@ export default function SystemPage() {
           <CardTitle>Журнал действий администраторов</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          {logs?.items.length === 0 && (
+          {logsError && (
+            <div className="flex flex-col items-center gap-3 py-6 text-center">
+              <p className="text-destructive">Не удалось загрузить журнал.</p>
+              <Button variant="outline" size="sm" onClick={() => refetchLogs()}>
+                Повторить
+              </Button>
+            </div>
+          )}
+          {!logsError && logs?.items.length === 0 && (
             <p className="text-sm text-muted-foreground">Журнал пуст.</p>
           )}
-          {logs?.items.map((log) => (
+          {!logsError && logs?.items.map((log) => (
             <div
               key={log.id}
               className="flex items-start justify-between gap-3 rounded-md border p-3"
