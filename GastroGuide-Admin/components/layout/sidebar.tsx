@@ -2,11 +2,11 @@
 
 import {
   Bot,
-  Boxes,
   ClipboardList,
   LayoutDashboard,
   ListTree,
   MessageSquare,
+  Shield,
   ShieldAlert,
   Store,
   Tag,
@@ -14,23 +14,49 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { ComponentType, SVGProps } from "react";
 
+import { useCurrentActor } from "@/lib/hooks/use-current-actor";
 import { cn } from "@/lib/utils";
 
-const NAV = [
+import { Badge } from "@/components/ui/badge";
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  adminOnly?: boolean;
+};
+
+const NAV: NavItem[] = [
   { href: "/dashboard", label: "Дашборд", icon: LayoutDashboard },
   { href: "/restaurants", label: "Заведения", icon: Store },
   { href: "/menu", label: "Меню", icon: ClipboardList },
   { href: "/offers", label: "Акции", icon: Tag },
   { href: "/reviews", label: "Отзывы", icon: MessageSquare },
-  { href: "/users", label: "Пользователи", icon: Users },
-  { href: "/categories", label: "Категории", icon: ListTree },
-  { href: "/ai", label: "AI-аналитика", icon: Bot },
-  { href: "/system", label: "Система", icon: ShieldAlert },
+  { href: "/users", label: "Пользователи", icon: Users, adminOnly: true },
+  { href: "/categories", label: "Категории", icon: ListTree, adminOnly: true },
+  { href: "/ai", label: "AI-аналитика", icon: Bot, adminOnly: true },
+  { href: "/system", label: "Система", icon: ShieldAlert, adminOnly: true },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const actor = useCurrentActor();
+
+  const items = NAV.filter((item) => {
+    if (!item.adminOnly) return true;
+    return actor.isAdmin;
+  });
+
+  const moderatorSummary =
+    actor.isModerator && !actor.isAdmin
+      ? actor.moderatedRestaurants.length === 0
+        ? "Без заведений"
+        : actor.moderatedRestaurants.length <= 2
+          ? actor.moderatedRestaurants.map((r) => r.name).join(", ")
+          : `${actor.moderatedRestaurants.length} заведения`
+      : null;
 
   return (
     <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r bg-card/40">
@@ -43,8 +69,23 @@ export function Sidebar() {
           <div className="text-xs text-muted-foreground">Admin Panel</div>
         </div>
       </div>
+
+      {moderatorSummary !== null && (
+        <div
+          className="border-b px-4 py-3 space-y-1"
+          title={actor.moderatedRestaurants.map((r) => r.name).join(", ")}
+        >
+          <Badge variant="warning" className="gap-1">
+            <Shield className="h-3 w-3" /> Модератор
+          </Badge>
+          <div className="text-xs text-muted-foreground truncate">
+            Управляет: {moderatorSummary}
+          </div>
+        </div>
+      )}
+
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {NAV.map((item) => {
+        {items.map((item) => {
           const Icon = item.icon;
           const active =
             pathname === item.href || pathname.startsWith(`${item.href}/`);
