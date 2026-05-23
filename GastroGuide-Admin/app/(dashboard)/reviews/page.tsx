@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { reviewsApi } from "@/lib/api/endpoints";
+import { useCurrentActor } from "@/lib/hooks/use-current-actor";
 import type { ReviewAdmin } from "@/lib/api/types";
 import { formatDate } from "@/lib/utils";
 
@@ -26,6 +27,8 @@ import {
 
 export default function ReviewsPage() {
   const queryClient = useQueryClient();
+  const actor = useCurrentActor();
+  const canDelete = actor.isAdmin;
   const [q, setQ] = useState("");
   const [ratingLte, setRatingLte] = useState<string>("all");
   const [page, setPage] = useState(1);
@@ -100,20 +103,22 @@ export default function ReviewsPage() {
       {
         id: "actions",
         header: "",
-        cell: ({ row }) => (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              if (confirm("Удалить отзыв?")) deleteMutation.mutate(row.original.id);
-            }}
-          >
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        ),
+        cell: ({ row }) =>
+          canDelete ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                if (confirm("Удалить отзыв?"))
+                  deleteMutation.mutate(row.original.id);
+              }}
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          ) : null,
       },
     ],
-    [deleteMutation],
+    [deleteMutation, canDelete],
   );
 
   const total = data?.total ?? 0;
