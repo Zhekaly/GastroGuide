@@ -17,14 +17,24 @@ export interface AdminTokenResponse {
   token_type: string;
 }
 
+export interface ModeratorRestaurantInfo {
+  id: number;
+  name: string;
+}
+
+export type AdminRole = "user" | "admin" | "moderator";
+
 export interface AdminMe {
   id: number;
   name: string;
   email: string;
-  role: "user" | "admin";
+  role: AdminRole;
   is_active: boolean;
   city: string;
   created_at: string;
+  is_admin: boolean;
+  is_moderator: boolean;
+  moderated_restaurants: ModeratorRestaurantInfo[];
 }
 
 export interface DashboardStats {
@@ -213,11 +223,12 @@ export interface UserAdmin {
   name: string;
   email: string;
   city: string;
-  role: "user" | "admin";
+  role: AdminRole;
   is_active: boolean;
   favorites_count: number;
   reviews_count: number;
   ai_sessions_count: number;
+  moderated_restaurants: ModeratorRestaurantInfo[];
   created_at: string;
   updated_at: string;
 }
@@ -225,8 +236,14 @@ export interface UserAdmin {
 export interface UserUpdate {
   name?: string;
   city?: string;
-  role?: "user" | "admin";
+  role?: AdminRole;
   is_active?: boolean;
+  /**
+   * null / undefined — не трогать привязки.
+   * [] — снять все.
+   * [1,2] — заменить на эти.
+   */
+  moderated_restaurant_ids?: number[] | null;
 }
 
 export interface CategoryAdmin {

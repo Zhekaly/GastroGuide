@@ -135,7 +135,7 @@ export const reviewsApi = {
 export const usersApi = {
   list: (params: {
     q?: string;
-    role?: "user" | "admin" | null;
+    role?: "user" | "admin" | "moderator" | null;
     is_active?: boolean | null;
     page?: number;
     page_size?: number;
