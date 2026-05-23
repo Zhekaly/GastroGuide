@@ -3,7 +3,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.api.admin.deps import get_current_admin, log_admin_action
+from app.api.admin.deps import (
+    check_restaurant_access,
+    get_current_admin_or_moderator,
+    log_admin_action,
+)
 from app.core.database import get_db
 from app.models.menu_item import MenuItem
 from app.models.restaurant import Restaurant
@@ -30,11 +34,19 @@ def _ensure_restaurant(db: Session, restaurant_id: int) -> Restaurant:
 def list_menu_items(
     restaurant_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    actor: User = Depends(get_current_admin_or_moderator),
 ):
     query = db.query(MenuItem)
+
     if restaurant_id is not None:
+        check_restaurant_access(actor, restaurant_id)
         query = query.filter(MenuItem.restaurant_id == restaurant_id)
+    elif actor.is_moderator:
+        moderated_ids = [r.id for r in actor.moderated_restaurants]
+        if not moderated_ids:
+            return []
+        query = query.filter(MenuItem.restaurant_id.in_(moderated_ids))
+
     items = query.order_by(
         MenuItem.restaurant_id.asc(),
         MenuItem.sort_order.asc(),
@@ -47,8 +59,9 @@ def list_menu_items(
 def create_menu_item(
     payload: AdminMenuItemCreate,
     db: Session = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    actor: User = Depends(get_current_admin_or_moderator),
 ):
+    check_restaurant_access(actor, payload.restaurant_id)
     restaurant = _ensure_restaurant(db, payload.restaurant_id)
 
     item = MenuItem(
@@ -63,7 +76,7 @@ def create_menu_item(
     db.flush()
 
     log_admin_action(
-        db, admin,
+        db, actor,
         action="menu.create",
         entity_type="menu_item",
         entity_id=item.id,
@@ -79,11 +92,13 @@ def update_menu_item(
     item_id: int,
     payload: AdminMenuItemUpdate,
     db: Session = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    actor: User = Depends(get_current_admin_or_moderator),
 ):
     item = db.query(MenuItem).filter(MenuItem.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Menu item not found")
+
+    check_restaurant_access(actor, item.restaurant_id)
 
     updates = payload.model_dump(exclude_unset=True)
     for field, value in updates.items():
@@ -92,7 +107,7 @@ def update_menu_item(
     db.add(item)
     db.flush()
     log_admin_action(
-        db, admin,
+        db, actor,
         action="menu.update",
         entity_type="menu_item",
         entity_id=item.id,
@@ -108,17 +123,19 @@ def update_menu_item(
 def delete_menu_item(
     item_id: int,
     db: Session = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    actor: User = Depends(get_current_admin_or_moderator),
 ):
     item = db.query(MenuItem).filter(MenuItem.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Menu item not found")
 
+    check_restaurant_access(actor, item.restaurant_id)
+
     name = item.name
     db.delete(item)
     db.flush()
     log_admin_action(
-        db, admin,
+        db, actor,
         action="menu.delete",
         entity_type="menu_item",
         entity_id=item_id,
