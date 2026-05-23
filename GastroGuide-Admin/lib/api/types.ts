@@ -178,7 +178,7 @@ export interface OfferAdmin {
   restaurant_name: string | null;
   title: string;
   description: string;
-  discount: string;
+  discount: string | null;
   expires: string;
   emoji: string;
   color: string;
@@ -190,7 +190,7 @@ export interface OfferInput {
   restaurant_id: number;
   title: string;
   description: string;
-  discount: string;
+  discount?: string | null;
   expires: string;
   emoji?: string;
   color?: string;

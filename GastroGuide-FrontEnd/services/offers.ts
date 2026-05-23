@@ -5,7 +5,7 @@ export type Offer = {
   restaurantId: number;
   title: string;
   description: string;
-  discount: string;
+  discount: string | null;
   expires: string;
   emoji: string;
   color: string;

@@ -236,9 +236,11 @@ export default function HomeScreen() {
                     onPress={() => router.push({ pathname: '/detail', params: { id: offer.restaurantId } })}
                     activeOpacity={0.8}
                   >
-                    <View style={[s.offerBadge, { backgroundColor: offer.color }]}>
-                      <Text style={s.offerBadgeText}>{offer.discount}</Text>
-                    </View>
+                    {offer.discount ? (
+                      <View style={[s.offerBadge, { backgroundColor: offer.color }]}>
+                        <Text style={s.offerBadgeText}>{offer.discount}</Text>
+                      </View>
+                    ) : null}
                     <View style={[s.offerIconWrap, { backgroundColor: offer.color + '20' }]}>
                       <Ionicons name="pricetag" size={32} color={offer.color} />
                     </View>

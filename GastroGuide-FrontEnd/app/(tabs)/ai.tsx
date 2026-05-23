@@ -829,9 +829,11 @@ export default function AIScreen() {
               <View key={offer.id} style={[ch.offerChip, { borderColor: offer.color + '40', backgroundColor: offer.color + '0A' }]}>
                 <Ionicons name="pricetag-outline" size={12} color={offer.color} />
                 <Text style={[ch.offerText, { color: offer.color }]}>{offer.title}</Text>
-                <View style={[ch.offerBadge, { backgroundColor: offer.color }]}>
-                  <Text style={ch.offerBadgeText}>{offer.discount}</Text>
-                </View>
+                {offer.discount ? (
+                  <View style={[ch.offerBadge, { backgroundColor: offer.color }]}>
+                    <Text style={ch.offerBadgeText}>{offer.discount}</Text>
+                  </View>
+                ) : null}
               </View>
             ))}
           </ScrollView>

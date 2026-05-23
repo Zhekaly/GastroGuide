@@ -9,7 +9,7 @@ class AdminOfferCreate(BaseModel):
     restaurant_id: int
     title: str = Field(..., min_length=1, max_length=255)
     description: str = Field(..., min_length=1, max_length=500)
-    discount: str = Field(..., min_length=1, max_length=50)
+    discount: str | None = Field(default=None, max_length=50)
     expires: str = Field(..., min_length=1, max_length=50)
     emoji: str = Field(default="🎁", max_length=20)
     color: str = Field(default="#E8420A", max_length=20)
@@ -19,7 +19,7 @@ class AdminOfferCreate(BaseModel):
 class AdminOfferUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = Field(default=None, min_length=1, max_length=500)
-    discount: str | None = Field(default=None, min_length=1, max_length=50)
+    discount: str | None = Field(default=None, max_length=50)
     expires: str | None = Field(default=None, min_length=1, max_length=50)
     emoji: str | None = Field(default=None, max_length=20)
     color: str | None = Field(default=None, max_length=20)
@@ -32,7 +32,7 @@ class AdminOfferResponse(BaseModel):
     restaurant_name: str | None = None
     title: str
     description: str
-    discount: str
+    discount: str | None = None
     expires: str
     emoji: str
     color: str

@@ -63,7 +63,13 @@ export default function OffersPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => offersApi.create(form),
+    mutationFn: () => {
+      const payload: OfferInput = {
+        ...form,
+        discount: form.discount?.trim() ? form.discount.trim() : null,
+      };
+      return offersApi.create(payload);
+    },
     onSuccess: () => {
       toast.success("Акция создана");
       setOpen(false);
@@ -96,7 +102,14 @@ export default function OffersPage() {
     () => [
       { accessorKey: "emoji", header: "", size: 60 },
       { accessorKey: "title", header: "Название" },
-      { accessorKey: "discount", header: "Скидка" },
+      {
+        accessorKey: "discount",
+        header: "Скидка",
+        cell: ({ row }) =>
+          row.original.discount ?? (
+            <span className="text-muted-foreground">—</span>
+          ),
+      },
       { accessorKey: "expires", header: "До" },
       {
         accessorKey: "restaurant_name",
@@ -206,10 +219,10 @@ export default function OffersPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>Скидка</Label>
+                  <Label>Скидка (необязательно)</Label>
                   <Input
                     placeholder="-30%"
-                    value={form.discount}
+                    value={form.discount ?? ""}
                     onChange={(e) => setForm((prev) => ({ ...prev, discount: e.target.value }))}
                   />
                 </div>

@@ -514,9 +514,11 @@ export default function DetailScreen() {
               <Text style={[s.offerTitle, { color: offer.color }]}>{offer.title}</Text>
               <Text style={s.offerDesc}>{offer.description}</Text>
             </View>
-            <View style={[s.offerBadge, { backgroundColor: offer.color }]}>
-              <Text style={s.offerBadgeText}>{offer.discount}</Text>
-            </View>
+            {offer.discount ? (
+              <View style={[s.offerBadge, { backgroundColor: offer.color }]}>
+                <Text style={s.offerBadgeText}>{offer.discount}</Text>
+              </View>
+            ) : null}
           </View>
         )}
 

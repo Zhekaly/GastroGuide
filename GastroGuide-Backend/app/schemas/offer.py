@@ -9,7 +9,7 @@ class OfferResponse(BaseModel):
     restaurantId: int = Field(validation_alias="restaurant_id")
     title: str
     description: str
-    discount: str
+    discount: str | None = None
     expires: str
     emoji: str
     color: str
