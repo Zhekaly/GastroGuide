@@ -10,6 +10,7 @@ import { restaurantsApi } from "@/lib/api/endpoints";
 
 import { RestaurantForm } from "@/components/forms/restaurant-form";
 import { RestaurantMenuPanel } from "@/components/forms/restaurant-menu-panel";
+import { RestaurantModeratorsPanel } from "@/components/forms/restaurant-moderators-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -109,6 +110,11 @@ export default function RestaurantDetailPage() {
       </Card>
 
       <RestaurantMenuPanel restaurantId={restaurant.id} initialMenu={restaurant.menu} />
+
+      <RestaurantModeratorsPanel
+        restaurantId={restaurant.id}
+        restaurantName={restaurant.name}
+      />
     </div>
   );
 }
