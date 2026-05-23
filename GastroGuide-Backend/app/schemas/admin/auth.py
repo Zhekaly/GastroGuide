@@ -16,6 +16,13 @@ class AdminTokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class AdminMeModeratorRestaurant(BaseModel):
+    id: int
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class AdminMeResponse(BaseModel):
     id: int
     name: str
@@ -24,5 +31,8 @@ class AdminMeResponse(BaseModel):
     is_active: bool
     city: str
     created_at: datetime
+    is_admin: bool = False
+    is_moderator: bool = False
+    moderated_restaurants: list[AdminMeModeratorRestaurant] = []
 
     model_config = ConfigDict(from_attributes=True)
