@@ -21,6 +21,8 @@ from app.models import (
     Favorite,
     AIChatSession,
     AIChatMessage,
+    ActivityLog,
+    RestaurantModerator,
 )
 
 config = context.config

@@ -12,6 +12,7 @@ from app.core.database import Base
 
 USER_ROLE_USER = "user"
 USER_ROLE_ADMIN = "admin"
+USER_ROLE_MODERATOR = "moderator"
 
 
 class User(Base):
@@ -53,6 +54,24 @@ class User(Base):
     reviews = relationship("Review", back_populates="user", cascade="all, delete-orphan")
     ai_chat_sessions = relationship("AIChatSession", back_populates="user", cascade="all, delete-orphan")
 
+    moderator_assignments = relationship(
+        "RestaurantModerator",
+        foreign_keys="RestaurantModerator.user_id",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    moderated_restaurants = relationship(
+        "Restaurant",
+        secondary="restaurant_moderators",
+        primaryjoin="User.id == RestaurantModerator.user_id",
+        secondaryjoin="Restaurant.id == RestaurantModerator.restaurant_id",
+        viewonly=True,
+    )
+
     @property
     def is_admin(self) -> bool:
         return self.role == USER_ROLE_ADMIN
+
+    @property
+    def is_moderator(self) -> bool:
+        return self.role == USER_ROLE_MODERATOR

@@ -85,3 +85,17 @@ class Restaurant(Base):
     )
 
     menu = relationship("MenuItem", back_populates="restaurant", cascade="all, delete-orphan")
+
+    moderator_assignments = relationship(
+        "RestaurantModerator",
+        foreign_keys="RestaurantModerator.restaurant_id",
+        back_populates="restaurant",
+        cascade="all, delete-orphan",
+    )
+    moderators = relationship(
+        "User",
+        secondary="restaurant_moderators",
+        primaryjoin="Restaurant.id == RestaurantModerator.restaurant_id",
+        secondaryjoin="User.id == RestaurantModerator.user_id",
+        viewonly=True,
+    )

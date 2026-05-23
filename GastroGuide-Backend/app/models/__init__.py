@@ -12,3 +12,4 @@ from app.models.favorite import Favorite
 from app.models.ai_chat_session import AIChatSession
 from app.models.ai_chat_message import AIChatMessage
 from app.models.activity_log import ActivityLog
+from app.models.restaurant_moderator import RestaurantModerator
