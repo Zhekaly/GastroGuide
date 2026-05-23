@@ -37,7 +37,6 @@ function getDefaultApiUrl() {
 }
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? getDefaultApiUrl();
-
 async function request<T = any>(
   url: string,
   options: RequestInit = {},
