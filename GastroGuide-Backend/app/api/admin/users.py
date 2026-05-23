@@ -8,16 +8,26 @@ from app.api.admin.deps import get_current_admin, log_admin_action
 from app.core.database import get_db
 from app.models.ai_chat_session import AIChatSession
 from app.models.favorite import Favorite
+from app.models.restaurant import Restaurant
+from app.models.restaurant_moderator import RestaurantModerator
 from app.models.review import Review
-from app.models.user import User
+from app.models.user import USER_ROLE_MODERATOR, User
 from app.schemas.admin.common import MessageResponse, PaginatedResponse
-from app.schemas.admin.user import AdminUserListItem, AdminUserUpdateRequest
+from app.schemas.admin.user import (
+    AdminUserListItem,
+    AdminUserUpdateRequest,
+    ModeratorRestaurantInfo,
+)
 
 
 router = APIRouter(prefix="/api/v1/admin/users", tags=["Admin · Users"])
 
 
 def _build_user_item(user: User, favorites: int, reviews: int, sessions: int) -> AdminUserListItem:
+    moderated = [
+        ModeratorRestaurantInfo(id=r.id, name=r.name)
+        for r in (user.moderated_restaurants or [])
+    ]
     return AdminUserListItem(
         id=user.id,
         name=user.name,
@@ -28,6 +38,7 @@ def _build_user_item(user: User, favorites: int, reviews: int, sessions: int) ->
         favorites_count=favorites,
         reviews_count=reviews,
         ai_sessions_count=sessions,
+        moderated_restaurants=moderated,
         created_at=user.created_at,
         updated_at=user.updated_at,
     )
@@ -38,7 +49,7 @@ def list_users(
     db: Session = Depends(get_db),
     admin: User = Depends(get_current_admin),
     q: str | None = Query(default=None),
-    role: str | None = Query(default=None, pattern="^(user|admin)$"),
+    role: str | None = Query(default=None, pattern="^(user|admin|moderator)$"),
     is_active: bool | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=200),
@@ -138,18 +149,81 @@ def update_user(
         )
 
     updates = payload.model_dump(exclude_unset=True)
+    moderated_ids_update = updates.pop("moderated_restaurant_ids", None)
+
     for field, value in updates.items():
         setattr(user, field, value)
 
     db.add(user)
     db.flush()
+
+    # Если роль сменили с moderator на другую — снимаем все привязки.
+    role_changed = "role" in updates
+    if role_changed and user.role != USER_ROLE_MODERATOR:
+        db.query(RestaurantModerator).filter(
+            RestaurantModerator.user_id == user.id
+        ).delete(synchronize_session=False)
+        db.flush()
+
+    # Обработка явного payload moderated_restaurant_ids (admin assigning).
+    if moderated_ids_update is not None:
+        # Проверим, что юзер сейчас модератор (или станет им сейчас).
+        if user.role != USER_ROLE_MODERATOR:
+            raise HTTPException(
+                status_code=400,
+                detail="Привязки модератора можно задавать только пользователю с ролью moderator",
+            )
+
+        # Валидация существования всех restaurant_id.
+        unique_ids = list(dict.fromkeys(moderated_ids_update))
+        if unique_ids:
+            existing = (
+                db.query(Restaurant.id)
+                .filter(Restaurant.id.in_(unique_ids))
+                .all()
+            )
+            existing_ids = {row[0] for row in existing}
+            missing = [rid for rid in unique_ids if rid not in existing_ids]
+            if missing:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Заведения не найдены: {missing}",
+                )
+
+        # Удаляем старые привязки и создаём новые.
+        db.query(RestaurantModerator).filter(
+            RestaurantModerator.user_id == user.id
+        ).delete(synchronize_session=False)
+        db.flush()
+
+        for rid in unique_ids:
+            db.add(
+                RestaurantModerator(
+                    user_id=user.id,
+                    restaurant_id=rid,
+                    assigned_by=admin.id,
+                )
+            )
+        db.flush()
+
+        log_admin_action(
+            db, admin,
+            action="moderator_assign",
+            entity_type="user",
+            entity_id=user.id,
+            description=f"Назначены заведения модератору '{user.email}'",
+            payload={"user_id": user.id, "restaurant_ids": unique_ids},
+        )
+
     log_admin_action(
         db, admin,
         action="user.update",
         entity_type="user",
         entity_id=user.id,
         description=f"Обновлён пользователь '{user.email}'",
-        payload={"changed": list(updates.keys())},
+        payload={"changed": list(updates.keys()) + (
+            ["moderated_restaurant_ids"] if moderated_ids_update is not None else []
+        )},
     )
     db.commit()
     db.refresh(user)
