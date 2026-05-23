@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { categoriesApi, restaurantsApi } from "@/lib/api/endpoints";
+import { useCurrentActor } from "@/lib/hooks/use-current-actor";
 import type { Restaurant, RestaurantInput } from "@/lib/api/types";
 
 import { MapPicker } from "@/components/maps/map-picker-dynamic";
@@ -48,6 +49,8 @@ const DEFAULT_FORM: RestaurantInput = {
 
 export function RestaurantForm({ restaurant, onSuccess }: RestaurantFormProps) {
   const queryClient = useQueryClient();
+  const actor = useCurrentActor();
+  const restrictAdminFields = actor.isModerator && !actor.isAdmin;
   const [form, setForm] = useState<RestaurantInput>(DEFAULT_FORM);
 
   useEffect(() => {
@@ -126,12 +129,25 @@ export function RestaurantForm({ restaurant, onSuccess }: RestaurantFormProps) {
       return;
     }
 
-    const payload: RestaurantInput = {
+    const fullPayload: RestaurantInput = {
       ...form,
       opens_at: form.is_24_7 ? null : form.opens_at,
       closes_at: form.is_24_7 ? null : form.closes_at,
       category_id: form.category_id && form.category_id > 0 ? form.category_id : null,
     };
+
+    // Модератору запрещены is_hidden и category_id даже если он попытается
+    // их подменить через DevTools — бэкенд тоже их отбьёт, но не дадим UI
+    // случайно отправить значение.
+    const payload: RestaurantInput = restrictAdminFields
+      ? (() => {
+          const { is_hidden: _is_hidden, category_id: _category_id, ...rest } =
+            fullPayload;
+          void _is_hidden;
+          void _category_id;
+          return rest as RestaurantInput;
+        })()
+      : fullPayload;
 
     if (restaurant) updateMutation.mutate(payload);
     else createMutation.mutate(payload);
@@ -154,12 +170,20 @@ export function RestaurantForm({ restaurant, onSuccess }: RestaurantFormProps) {
           <Input value={form.type} onChange={(e) => update("type", e.target.value)} required />
         </Field>
 
-        <Field label="Категория">
+        <Field
+          label="Категория"
+          hint={
+            restrictAdminFields
+              ? "Только администратор может менять категорию"
+              : undefined
+          }
+        >
           <Select
             value={form.category_id ? String(form.category_id) : "none"}
             onValueChange={(value) =>
               update("category_id", value === "none" ? null : Number(value))
             }
+            disabled={restrictAdminFields}
           >
             <SelectTrigger>
               <SelectValue placeholder="Без категории" />
@@ -233,8 +257,19 @@ export function RestaurantForm({ restaurant, onSuccess }: RestaurantFormProps) {
         <Field label="Работает 24/7">
           <Switch checked={form.is_24_7 ?? false} onCheckedChange={(v) => update("is_24_7", v)} />
         </Field>
-        <Field label="Скрыть заведение">
-          <Switch checked={form.is_hidden ?? false} onCheckedChange={(v) => update("is_hidden", v)} />
+        <Field
+          label="Скрыть заведение"
+          hint={
+            restrictAdminFields
+              ? "Только администратор может управлять видимостью"
+              : undefined
+          }
+        >
+          <Switch
+            checked={form.is_hidden ?? false}
+            onCheckedChange={(v) => update("is_hidden", v)}
+            disabled={restrictAdminFields}
+          />
         </Field>
       </section>
 
@@ -317,11 +352,20 @@ export function RestaurantForm({ restaurant, onSuccess }: RestaurantFormProps) {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+  hint,
+}: {
+  label: string;
+  children: React.ReactNode;
+  hint?: string;
+}) {
   return (
     <div className="space-y-1.5">
       <Label>{label}</Label>
       {children}
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }

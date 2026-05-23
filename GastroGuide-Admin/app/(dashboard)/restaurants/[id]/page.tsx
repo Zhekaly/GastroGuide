@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { restaurantsApi } from "@/lib/api/endpoints";
+import { useCurrentActor } from "@/lib/hooks/use-current-actor";
 
 import { RestaurantForm } from "@/components/forms/restaurant-form";
 import { RestaurantMenuPanel } from "@/components/forms/restaurant-menu-panel";
@@ -19,6 +20,8 @@ export default function RestaurantDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const actor = useCurrentActor();
+  const canManage = actor.isAdmin;
   const id = Number(params.id);
 
   const { data: restaurant, isLoading, isError } = useQuery({
@@ -85,18 +88,20 @@ export default function RestaurantDetailPage() {
             <RefreshCw className="h-4 w-4" />
             Пересчитать рейтинг
           </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              if (confirm(`Удалить "${restaurant.name}"? Это действие необратимо.`)) {
-                removeMutation.mutate();
-              }
-            }}
-          >
-            <Trash2 className="h-4 w-4" />
-            Удалить
-          </Button>
+          {canManage && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                if (confirm(`Удалить "${restaurant.name}"? Это действие необратимо.`)) {
+                  removeMutation.mutate();
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+              Удалить
+            </Button>
+          )}
         </div>
       </div>
 
@@ -111,10 +116,12 @@ export default function RestaurantDetailPage() {
 
       <RestaurantMenuPanel restaurantId={restaurant.id} initialMenu={restaurant.menu} />
 
-      <RestaurantModeratorsPanel
-        restaurantId={restaurant.id}
-        restaurantName={restaurant.name}
-      />
+      {canManage && (
+        <RestaurantModeratorsPanel
+          restaurantId={restaurant.id}
+          restaurantName={restaurant.name}
+        />
+      )}
     </div>
   );
 }
