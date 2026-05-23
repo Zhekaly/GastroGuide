@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Star, Trash2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -22,7 +23,14 @@ import {
 
 export default function MenuPage() {
   const queryClient = useQueryClient();
-  const [restaurantId, setRestaurantId] = useState<number | null>(null);
+  const searchParams = useSearchParams();
+  const initialRestaurantId = useMemo(() => {
+    const raw = searchParams.get("restaurant_id");
+    if (!raw) return null;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [searchParams]);
+  const [restaurantId, setRestaurantId] = useState<number | null>(initialRestaurantId);
 
   const { data: restaurants } = useQuery({
     queryKey: ["restaurants-all"],
