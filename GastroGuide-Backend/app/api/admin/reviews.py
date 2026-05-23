@@ -4,7 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from app.api.admin.deps import get_current_admin, log_admin_action
+from app.api.admin.deps import (
+    check_restaurant_access,
+    get_current_admin,
+    get_current_admin_or_moderator,
+    log_admin_action,
+)
 from app.core.database import get_db
 from app.models.restaurant import Restaurant
 from app.models.review import Review
@@ -20,7 +25,7 @@ router = APIRouter(prefix="/api/v1/admin/reviews", tags=["Admin · Reviews"])
 @router.get("", response_model=PaginatedResponse[AdminReviewItem])
 def list_reviews(
     db: Session = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    actor: User = Depends(get_current_admin_or_moderator),
     q: str | None = Query(default=None),
     rating: int | None = Query(default=None, ge=1, le=5),
     rating_lte: int | None = Query(default=None, ge=1, le=5),
@@ -33,6 +38,17 @@ def list_reviews(
         db.query(Review, Restaurant.name)
         .outerjoin(Restaurant, Restaurant.id == Review.restaurant_id)
     )
+
+    # Модератор видит только отзывы своих заведений.
+    if restaurant_id is not None:
+        check_restaurant_access(actor, restaurant_id)
+    elif actor.is_moderator:
+        moderated_ids = [r.id for r in actor.moderated_restaurants]
+        if not moderated_ids:
+            return PaginatedResponse[AdminReviewItem].build(
+                items=[], total=0, page=page, page_size=page_size
+            )
+        query = query.filter(Review.restaurant_id.in_(moderated_ids))
 
     if q:
         like = f"%{q}%"
