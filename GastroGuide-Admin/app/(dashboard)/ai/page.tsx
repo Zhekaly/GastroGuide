@@ -45,6 +45,8 @@ export default function AIPage() {
       queryClient.invalidateQueries({ queryKey: ["ai-sessions"] });
       queryClient.invalidateQueries({ queryKey: ["ai-analytics"] });
     },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Ошибка"),
   });
 
   const deleteSessionMutation = useMutation({
@@ -54,6 +56,8 @@ export default function AIPage() {
       queryClient.invalidateQueries({ queryKey: ["ai-sessions"] });
       queryClient.invalidateQueries({ queryKey: ["ai-analytics"] });
     },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Ошибка"),
   });
 
   return (

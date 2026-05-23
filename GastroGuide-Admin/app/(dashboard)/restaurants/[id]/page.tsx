@@ -32,6 +32,8 @@ export default function RestaurantDetailPage() {
       toast.success("Рейтинг пересчитан");
       queryClient.invalidateQueries({ queryKey: ["restaurant", id] });
     },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Ошибка"),
   });
 
   const removeMutation = useMutation({

@@ -48,6 +48,8 @@ export default function SystemPage() {
       toast.success(response.message);
       queryClient.invalidateQueries({ queryKey: ["restaurants"] });
     },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Не удалось пересчитать рейтинги"),
   });
 
   const resetSequencesMutation = useMutation({

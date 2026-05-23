@@ -40,6 +40,8 @@ export default function MenuPage() {
       toast.success("Блюдо удалено");
       queryClient.invalidateQueries({ queryKey: ["menu"] });
     },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Ошибка"),
   });
 
   const togglePopular = useMutation({
@@ -48,6 +50,8 @@ export default function MenuPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menu"] });
     },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Ошибка"),
   });
 
   const columns = useMemo<ColumnDef<MenuItemAdmin, unknown>[]>(

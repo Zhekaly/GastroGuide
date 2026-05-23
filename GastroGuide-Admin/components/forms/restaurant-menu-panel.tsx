@@ -86,6 +86,8 @@ export function RestaurantMenuPanel({
       queryClient.invalidateQueries({ queryKey: ["menu", restaurantId] });
       queryClient.invalidateQueries({ queryKey: ["restaurant", restaurantId] });
     },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Ошибка"),
   });
 
   return (

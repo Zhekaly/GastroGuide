@@ -40,6 +40,8 @@ export default function CategoriesPage() {
       toast.success("Удалено");
       queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Ошибка"),
   });
 
   const reorderMutation = useMutation({
@@ -47,6 +49,8 @@ export default function CategoriesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Ошибка"),
   });
 
   function move(category: CategoryAdmin, direction: -1 | 1) {

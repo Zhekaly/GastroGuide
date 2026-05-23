@@ -46,6 +46,8 @@ export default function ReviewsPage() {
       toast.success("Отзыв удалён, рейтинг ресторана пересчитан");
       queryClient.invalidateQueries({ queryKey: ["reviews"] });
     },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Ошибка"),
   });
 
   const columns = useMemo<ColumnDef<ReviewAdmin, unknown>[]>(

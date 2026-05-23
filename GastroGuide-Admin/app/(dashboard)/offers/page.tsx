@@ -78,6 +78,8 @@ export default function OffersPage() {
     mutationFn: ({ id, active }: { id: number; active: boolean }) =>
       offersApi.update(id, { active }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["offers"] }),
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Ошибка"),
   });
 
   const deleteMutation = useMutation({
@@ -86,6 +88,8 @@ export default function OffersPage() {
       toast.success("Удалено");
       queryClient.invalidateQueries({ queryKey: ["offers"] });
     },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Ошибка"),
   });
 
   const columns = useMemo<ColumnDef<OfferAdmin, unknown>[]>(
