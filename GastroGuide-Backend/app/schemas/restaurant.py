@@ -12,6 +12,7 @@ class MenuItemResponse(BaseModel):
     name: str
     price: str
     emoji: str
+    imageUrl: str | None = Field(default=None, validation_alias="image_url")
     popular: bool
 
     model_config = ConfigDict(from_attributes=True)

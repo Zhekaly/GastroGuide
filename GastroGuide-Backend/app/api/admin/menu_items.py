@@ -69,6 +69,7 @@ def create_menu_item(
         name=payload.name,
         price=payload.price,
         emoji=payload.emoji,
+        image_url=payload.image_url,
         popular=payload.popular,
         sort_order=payload.sort_order,
     )

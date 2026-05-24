@@ -21,6 +21,9 @@ class MenuItem(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     price: Mapped[str] = mapped_column(String(50), nullable=False)
     emoji: Mapped[str] = mapped_column(String(20), nullable=False)
+
+    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
     popular: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
