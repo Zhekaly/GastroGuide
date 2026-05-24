@@ -166,12 +166,14 @@ def update_user(
         db.flush()
 
     # Обработка явного payload moderated_restaurant_ids (admin assigning).
-    if moderated_ids_update is not None:
+    # Пустой список [] валиден для любой роли (= очистить привязки) — авточистка
+    # уже выполнена выше при role_changed. Непустой список требует роли moderator.
+    if moderated_ids_update is not None and len(moderated_ids_update) > 0:
         # Проверим, что юзер сейчас модератор (или станет им сейчас).
         if user.role != USER_ROLE_MODERATOR:
             raise HTTPException(
                 status_code=400,
-                detail="Привязки модератора можно задавать только пользователю с ролью moderator",
+                detail="Непустые привязки модератора можно задавать только пользователю с ролью moderator",
             )
 
         # Валидация существования всех restaurant_id.
