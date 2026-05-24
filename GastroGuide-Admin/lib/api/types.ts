@@ -103,6 +103,7 @@ export interface RestaurantMenuItem {
   name: string;
   price: string;
   emoji: string;
+  image_url?: string | null;
   popular: boolean;
   sort_order: number;
 }
@@ -169,6 +170,7 @@ export interface MenuItemAdmin {
   name: string;
   price: string;
   emoji: string;
+  image_url?: string | null;
   popular: boolean;
   sort_order: number;
 }
@@ -178,6 +180,7 @@ export interface MenuItemInput {
   name: string;
   price: string;
   emoji?: string;
+  image_url?: string | null;
   popular?: boolean;
   sort_order?: number;
 }

@@ -64,6 +64,24 @@ export default function MenuPage() {
 
   const columns = useMemo<ColumnDef<MenuItemAdmin, unknown>[]>(
     () => [
+      {
+        id: "image",
+        header: "Фото",
+        size: 80,
+        cell: ({ row }) =>
+          row.original.image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={row.original.image_url}
+              alt={row.original.name}
+              className="h-10 w-10 rounded-md object-cover border"
+            />
+          ) : (
+            <div className="h-10 w-10 rounded-md border bg-muted flex items-center justify-center">
+              <span>{row.original.emoji}</span>
+            </div>
+          ),
+      },
       { accessorKey: "emoji", header: "🍽", size: 60 },
       { accessorKey: "name", header: "Название" },
       { accessorKey: "price", header: "Цена" },
