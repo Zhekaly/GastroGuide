@@ -12,6 +12,7 @@ export type MenuItem = {
   name: string;
   price: string;
   emoji: string;
+  imageUrl?: string | null;
   popular: boolean;
 };
 

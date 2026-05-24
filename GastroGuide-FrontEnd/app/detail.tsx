@@ -1,4 +1,5 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -24,7 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authService } from '../services/auth';
 import { addFavorite, getFavorites, removeFavorite } from '../services/favorites';
 import { getRestaurantOffers, Offer } from '../services/offers';
-import { getRestaurantById, Restaurant } from '../services/restaurants';
+import { getRestaurantById, Restaurant, MenuItem } from '../services/restaurants';
 import {
   createReview,
   getReviewsByRestaurant,
@@ -577,11 +578,27 @@ export default function DetailScreen() {
 
         {activeTab === 'menu' && r.menu && (
           <View style={s.menuCard}>
-            {r.menu.map((item: any, i: number) => (
-              <View key={item.name} style={[s.menuItem, i < r.menu.length - 1 && s.menuItemBorder]}>
-                <View style={[s.menuIcon, { backgroundColor: r.color + '15' }]}>
+            {r.menu.map((item: MenuItem, i: number) => (
+              // <View key={item.name} style={[s.menuItem, i < r.menu.length - 1 && s.menuItemBorder]}>
+              <View key={item.id} style={[s.menuItem, i < r.menu.length - 1 && s.menuItemBorder]}>
+                {/* <View style={[s.menuIcon, { backgroundColor: r.color + '15' }]}>
                   <Ionicons name="fast-food-outline" size={18} color={r.color} />
-                </View>
+                </View> */}
+
+                {item.imageUrl ? (
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    style={s.menuItemImage}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                    transition={120}
+                  />
+                ) : (
+                  <View style={[s.menuIcon, { backgroundColor: r.color + '15' }]}>
+                    <Ionicons name="fast-food-outline" size={18} color={r.color} />
+                  </View>
+                )}
+
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Text style={s.menuName}>{item.name}</Text>
@@ -883,6 +900,14 @@ const s = StyleSheet.create({
   menuItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14, gap: 10 },
   menuItemBorder: { borderBottomWidth: 1, borderBottomColor: C.border },
   menuIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  
+  menuItemImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: C.border,
+  },
+
   menuName: { fontSize: 13, fontWeight: '600', color: C.dark },
   menuPrice: { fontSize: 13, fontWeight: '800' },
   popularBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: '#FFF3E0', borderRadius: 6, paddingHorizontal: 5, paddingVertical: 1 },
