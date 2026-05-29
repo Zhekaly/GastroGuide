@@ -1,6 +1,6 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   Alert,
   // Image,
@@ -21,11 +21,7 @@ import { authService } from '../../services/auth';
 // import { getRestaurantImage } from '../../utils/restaurantImages';
 import { getRestaurantImageSource } from '../../utils/restaurantImages';
 import { Image } from 'expo-image';
-
-const C = {
-  bg: '#FDF8F2', dark: '#1A1208', accent: '#E8420A',
-  muted: '#8C7B6B', border: '#EDE5D8', green: '#2E7D32', red: '#D32F2F',
-};
+import { AppThemeColors, useAppTheme } from '@/lib/theme';
 
 function isAuthError(err: unknown) {
   if (!(err instanceof Error)) return false;
@@ -38,7 +34,8 @@ function isAuthError(err: unknown) {
 export default function ProfileScreen() {
   const [notifications, setNotifications] = useState(true);
   const [location, setLocation] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const { colors: C, isDark, toggleDark } = useAppTheme();
+  const s = useMemo(() => createStyles(C), [C]);
 
   const [isGuest, setIsGuest] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -131,7 +128,7 @@ export default function ProfileScreen() {
   if (loading) {
     return (
       <SafeAreaView style={s.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ fontSize: 16, color: C.dark, fontWeight: '700' }}>Загрузка профиля...</Text>
         </View>
@@ -141,7 +138,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={s.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={[s.header, { paddingTop: insets.top + 24 }]}>
           <View style={s.avatarWrap}>
@@ -156,7 +153,7 @@ export default function ProfileScreen() {
           {isGuest ? (
             <TouchableOpacity
               style={s.editBtn}
-              onPress={() => router.push({ pathname: '/onboarding', params: { screen: 'auth' } })}
+              onPress={() => router.push({ pathname: '/onboarding', params: { initialScreen: 'auth' } })}
             >
               <Feather name="edit-2" size={12} color={C.accent} style={{ marginRight: 6 }} />
               <Text style={s.editBtnText}>Войти / Зарегистрироваться</Text>
@@ -235,7 +232,7 @@ export default function ProfileScreen() {
                   <Text style={s.settingSub}>Акции и новые места</Text>
                 </View>
               </View>
-              <Switch value={notifications} onValueChange={setNotifications} trackColor={{ false: C.border, true: C.accent + '80' }} thumbColor={notifications ? C.accent : '#fff'} />
+              <Switch value={notifications} onValueChange={setNotifications} trackColor={{ false: C.border, true: C.accent + '80' }} thumbColor={notifications ? C.accent : C.card} />
             </View>
             <View style={s.divider} />
             <View style={s.settingRow}>
@@ -248,7 +245,7 @@ export default function ProfileScreen() {
                   <Text style={s.settingSub}>Для точного расстояния</Text>
                 </View>
               </View>
-              <Switch value={location} onValueChange={setLocation} trackColor={{ false: C.border, true: C.accent + '80' }} thumbColor={location ? C.accent : '#fff'} />
+              <Switch value={location} onValueChange={setLocation} trackColor={{ false: C.border, true: C.accent + '80' }} thumbColor={location ? C.accent : C.card} />
             </View>
             <View style={s.divider} />
             <View style={s.settingRow}>
@@ -258,10 +255,10 @@ export default function ProfileScreen() {
                 </View>
                 <View>
                   <Text style={s.settingLabel}>Тёмная тема</Text>
-                  <Text style={s.settingSub}>Скоро доступно</Text>
+                  <Text style={s.settingSub}>{isDark ? 'Включена' : 'Выключена'}</Text>
                 </View>
               </View>
-              <Switch value={darkMode} onValueChange={setDarkMode} trackColor={{ false: C.border, true: C.accent + '80' }} thumbColor={darkMode ? C.accent : '#fff'} disabled />
+              <Switch value={isDark} onValueChange={toggleDark} trackColor={{ false: C.border, true: C.accent + '80' }} thumbColor={isDark ? C.accent : C.card} />
             </View>
           </View>
         </View>
@@ -302,7 +299,7 @@ export default function ProfileScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const createStyles = (C: AppThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   header: { alignItems: 'center', paddingBottom: 20, paddingHorizontal: 20 },
   avatarWrap: { width: 90, height: 90, borderRadius: 45, backgroundColor: C.accent + '18', borderWidth: 2, borderColor: C.accent + '30', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
@@ -311,25 +308,25 @@ const s = StyleSheet.create({
   editBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 9, backgroundColor: C.accent + '12', borderWidth: 1.5, borderColor: C.accent + '30', borderRadius: 20 },
   editBtnText: { fontSize: 12, color: C.accent, fontWeight: '700' },
   statsRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, marginBottom: 20 },
-  statCard: { flex: 1, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 16, padding: 12, alignItems: 'center', gap: 4 },
+  statCard: { flex: 1, backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 16, padding: 12, alignItems: 'center', gap: 4 },
   statValue: { fontSize: 18, fontWeight: '900', color: C.dark },
   statLabel: { fontSize: 9, color: C.muted },
   section: { paddingHorizontal: 20, marginBottom: 20 },
   sectionTitle: { fontSize: 10, fontWeight: '700', color: C.dark, letterSpacing: 1, marginBottom: 10 },
   sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  card: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 16, marginBottom: 8 },
+  card: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 16, marginBottom: 8 },
   cardImage: { width: 46, height: 46, borderRadius: 13, flexShrink: 0 },
   cardName: { fontSize: 14, fontWeight: '700', color: C.dark },
   cardSub: { fontSize: 11, color: C.muted, marginTop: 2 },
-  emptyBox: { backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 16, padding: 16 },
+  emptyBox: { backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 16, padding: 16 },
   emptyText: { fontSize: 13, color: C.muted, textAlign: 'center' },
-  settingsCard: { backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 18, overflow: 'hidden' },
+  settingsCard: { backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 18, overflow: 'hidden' },
   settingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14 },
   settingIconWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: C.accent + '10', alignItems: 'center', justifyContent: 'center' },
   settingLabel: { fontSize: 14, fontWeight: '600', color: C.dark },
   settingSub: { fontSize: 10, color: C.muted, marginTop: 1 },
   divider: { height: 1, backgroundColor: C.border, marginHorizontal: 14 },
-  menuCard: { backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 18, overflow: 'hidden' },
+  menuCard: { backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 18, overflow: 'hidden' },
   menuRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 14 },
   menuLabel: { flex: 1, fontSize: 14, fontWeight: '600', color: C.dark, marginLeft: 2 },
   menuValue: { fontSize: 12, color: C.muted, marginRight: 8 },

@@ -5,7 +5,7 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Dimensions,
   // Image,
@@ -30,21 +30,12 @@ import {
   parseDistanceToMeters,
 } from '../../utils/format';
 import { Image } from 'expo-image';
+import { AppThemeColors, useAppTheme } from '@/lib/theme';
 
 const { height: SH } = Dimensions.get('window');
 const MAP_H = SH * 0.55;
 
 const FALLBACK_COORDS: [number, number] = [51.1801, 71.4460];
-
-const C = {
-  bg: '#FDF8F2',
-  dark: '#1A1208',
-  accent: '#E8420A',
-  muted: '#8C7B6B',
-  border: '#EDE5D8',
-  green: '#2E7D32',
-  red: '#D32F2F',
-};
 
 const FILTERS = ['Все', 'Открыто', 'Рядом', 'Топ'];
 
@@ -58,6 +49,8 @@ function buildMapHTML(
   routeCoords: [number, number][] | null,
   travelMode: string,
   userCoords: [number, number],
+  isDark: boolean,
+  colors: AppThemeColors,
 ): string {
   const markersJS = restaurants
     .map(r => {
@@ -92,7 +85,7 @@ function buildMapHTML(
       ? `
     if (window._route) { map.removeLayer(window._route); }
     window._route = L.polyline(${JSON.stringify(routeCoords)}, {
-      color: '${travelMode === 'foot-walking' ? C.accent : '#1565C0'}',
+      color: '${travelMode === 'foot-walking' ? colors.accent : '#1565C0'}',
       weight: 5, opacity: 0.85,
       dashArray: ${travelMode === 'foot-walking' ? "'8, 6'" : 'null'},
       lineCap: 'round', lineJoin: 'round',
@@ -113,6 +106,9 @@ function buildMapHTML(
     map.setView([${selectedRestaurant.lat}, ${selectedRestaurant.lng}], Math.max(map.getZoom(), 16), {animate: false});
   `
       : '';
+  const tileLayer = isDark
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 
   return `<!DOCTYPE html>
 <html>
@@ -127,14 +123,14 @@ function buildMapHTML(
     .leaflet-control-attribution { display: none; }
     .leaflet-bottom.leaflet-right { bottom: 14px !important; right: 14px !important; }
     .leaflet-control-zoom { border: none !important; margin: 0 !important; }
-    .leaflet-control-zoom a { width: 36px !important; height: 36px !important; line-height: 36px !important; border-radius: 10px !important; font-size: 18px !important; color: #1A1208 !important; border: 1.5px solid #EDE5D8 !important; background: rgba(253,248,242,0.96) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important; }
+    .leaflet-control-zoom a { width: 36px !important; height: 36px !important; line-height: 36px !important; border-radius: 10px !important; font-size: 18px !important; color: ${colors.dark} !important; border: 1.5px solid ${colors.border} !important; background: ${colors.overlay} !important; box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important; }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <script>
     var map = L.map('map', { center: [${userCoords[0]}, ${userCoords[1]}], zoom: 13, zoomControl: false });
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19 }).addTo(map);
+    L.tileLayer('${tileLayer}', { subdomains: 'abcd', maxZoom: 19 }).addTo(map);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     var userIcon = L.divIcon({
@@ -159,6 +155,8 @@ function buildMapHTML(
 
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
+  const { colors: C, isDark } = useAppTheme();
+  const s = useMemo(() => createStyles(C), [C]);
   const params = useLocalSearchParams<{ restaurantId?: string; buildRoute?: string }>();
   const webViewRef = useRef<any>(null);
 
@@ -284,6 +282,8 @@ export default function MapScreen() {
     routeCoords,
     travelMode,
     userCoords,
+    isDark,
+    C,
   );
 
   const handleMessage = (event: any) => {
@@ -386,7 +386,7 @@ export default function MapScreen() {
   if (loading || !locationReady) {
     return (
       <SafeAreaView style={s.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ fontSize: 16, color: C.dark, fontWeight: '700' }}>Загрузка карты...</Text>
         </View>
@@ -397,7 +397,7 @@ export default function MapScreen() {
   if (error) {
     return (
       <SafeAreaView style={s.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
           <Text style={{ fontSize: 16, color: C.red, fontWeight: '700', textAlign: 'center' }}>{error}</Text>
         </View>
@@ -407,7 +407,7 @@ export default function MapScreen() {
 
   return (
     <SafeAreaView style={s.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
 
       <View style={[s.topBar, { top: insets.top + 12 }]}>
         <View style={s.searchBar}>
@@ -639,7 +639,7 @@ export default function MapScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const createStyles = (C: AppThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   topBar: {
     position: 'absolute', left: 16, right: 16,
@@ -647,7 +647,7 @@ const s = StyleSheet.create({
   },
   searchBar: {
     flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: 'rgba(253,248,242,0.96)',
+    backgroundColor: C.overlay,
     borderWidth: 1, borderColor: C.border, borderRadius: 14,
     paddingHorizontal: 14, paddingVertical: 11,
     shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
@@ -665,7 +665,7 @@ const s = StyleSheet.create({
     flexDirection: 'row', gap: 8, zIndex: 10,
   },
   filterChip: {
-    backgroundColor: 'rgba(253,248,242,0.96)',
+    backgroundColor: C.overlay,
     borderWidth: 1, borderColor: C.border,
     borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6,
   },
@@ -675,13 +675,13 @@ const s = StyleSheet.create({
   counter: {
     position: 'absolute', top: MAP_H - 42, left: 16,
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: 'rgba(253,248,242,0.95)',
+    backgroundColor: C.overlay,
     borderWidth: 1, borderColor: C.border,
     borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, zIndex: 5,
   },
   counterText: { fontSize: 11, color: C.muted, fontWeight: '600' },
   bottomSheet: {
-    backgroundColor: 'rgba(253,248,242,0.98)',
+    backgroundColor: C.overlay,
     borderTopWidth: 1, borderTopColor: C.border,
     borderTopLeftRadius: 22, borderTopRightRadius: 22,
     paddingTop: 12, paddingBottom: 20,
@@ -689,20 +689,20 @@ const s = StyleSheet.create({
   handle: { width: 36, height: 4, backgroundColor: C.border, borderRadius: 2, alignSelf: 'center', marginBottom: 12 },
   sheetTitle: { fontSize: 10, fontWeight: '700', color: C.muted, letterSpacing: 1, paddingHorizontal: 20, marginBottom: 10 },
   sheetRow: { paddingHorizontal: 20, gap: 10 },
-  miniCard: { width: 88, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 14, padding: 10, alignItems: 'center', alignSelf: 'flex-start' },
+  miniCard: { width: 88, backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 14, padding: 10, alignItems: 'center', alignSelf: 'flex-start' },
   miniImage: { width: 42, height: 42, borderRadius: 13, marginBottom: 5 },
   miniName: { fontSize: 10, fontWeight: '700', color: C.dark, textAlign: 'center', lineHeight: 13, marginBottom: 2 },
   miniDist: { fontSize: 9, color: C.muted },
   miniRating: { fontSize: 10, fontWeight: '700', marginTop: 2 },
   routeBar: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, marginBottom: 10 },
-  modeBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1.5, borderColor: C.border, borderRadius: 20, backgroundColor: '#fff' },
+  modeBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1.5, borderColor: C.border, borderRadius: 20, backgroundColor: C.card },
   modeBtnActive: { backgroundColor: C.accent + '12', borderColor: C.accent },
   modeBtnText: { fontSize: 11, color: C.dark, fontWeight: '600' },
   routeBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: C.accent },
   routeBtnText: { fontSize: 11, color: '#fff', fontWeight: '700' },
   routeInfo: { marginLeft: 'auto' as any, backgroundColor: C.accent + '12', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
   routeInfoText: { fontSize: 11, color: C.accent, fontWeight: '700' },
-  selectedCard: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, padding: 14, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 18 },
+  selectedCard: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, padding: 14, backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 18 },
   selectedImage: { width: 54, height: 54, borderRadius: 16 },
   selectedName: { fontSize: 15, fontWeight: '800', color: C.dark, marginBottom: 2 },
   selectedSub: { fontSize: 11, color: C.muted },

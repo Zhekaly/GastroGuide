@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
@@ -35,22 +35,13 @@ import {
 import { getProfileMe } from '../services/profile';
 // import { getRestaurantImage } from '../utils/restaurantImages';
 import { getRestaurantImageSources } from '../utils/restaurantImages';
+import { AppThemeColors, useAppTheme } from '@/lib/theme';
 
-const C = {
-  bg: '#FDF8F2',
-  dark: '#1A1208',
-  accent: '#E8420A',
-  muted: '#8C7B6B',
-  border: '#EDE5D8',
-  green: '#2E7D32',
-  red: '#D32F2F',
-};
-
-function StarRow({ rating }: { rating: number }) {
+function StarRow({ rating, borderColor }: { rating: number; borderColor: string }) {
   return (
     <View style={{ flexDirection: 'row', gap: 2 }}>
       {[1, 2, 3, 4, 5].map(i => (
-        <Ionicons key={i} name="star" size={10} color={i <= rating ? '#F5A623' : C.border} />
+        <Ionicons key={i} name="star" size={10} color={i <= rating ? '#F5A623' : borderColor} />
       ))}
     </View>
   );
@@ -68,6 +59,8 @@ function formatReviewDate(dateString: string) {
 }
 
 export default function DetailScreen() {
+  const { colors: C, isDark } = useAppTheme();
+  const s = useMemo(() => createStyles(C), [C]);
   const { id } = useLocalSearchParams();
   const restaurantId = Number(id);
   const { width: screenWidth } = useWindowDimensions();
@@ -420,7 +413,7 @@ export default function DetailScreen() {
 
   return (
     <SafeAreaView style={s.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={`${r.color}18`} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={isDark ? C.bg : `${r.color}18`} />
 
       <Animated.View style={[s.hero, { backgroundColor: r.color + '18' }]}>
         <Animated.ScrollView
@@ -653,7 +646,7 @@ export default function DetailScreen() {
             <View style={s.ratingBox}>
               <Text style={s.bigRating}>{r.rating}</Text>
               <View>
-                <StarRow rating={Math.round(r.rating)} />
+                <StarRow rating={Math.round(r.rating)} borderColor={C.border} />
                 <Text style={s.reviewCount}>{r.reviews} отзывов</Text>
               </View>
             </View>
@@ -746,7 +739,7 @@ export default function DetailScreen() {
                         {rev.author_name || 'Пользователь'}
                       </Text>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        <StarRow rating={rev.rating} />
+                        <StarRow rating={rev.rating} borderColor={C.border} />
                         <Text style={s.reviewDate}>{formatReviewDate(rev.created_at)}</Text>
                       </View>
                     </View>
@@ -786,7 +779,7 @@ export default function DetailScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const createStyles = (C: AppThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   hero: {
     height: 280,
@@ -821,7 +814,7 @@ const s = StyleSheet.create({
   },
   photoDotActive: {
     width: 18,
-    backgroundColor: '#fff',
+    backgroundColor: C.card,
   },
   backBtn: {
     position: 'absolute',
@@ -862,13 +855,13 @@ const s = StyleSheet.create({
   offerBadgeText: { fontSize: 11, color: '#fff', fontWeight: '900' },
   description: { fontSize: 13, color: C.muted, lineHeight: 20, marginBottom: 14 },
   featuresRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 },
-  featureChip: { backgroundColor: '#fff', borderWidth: 1, borderColor: C.border, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
+  featureChip: { backgroundColor: C.card, borderWidth: 1, borderColor: C.border, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
   featureText: { fontSize: 10, color: C.dark, fontWeight: '600' },
   statsRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
   // statCard: { flex: 1, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 14, padding: 10, alignItems: 'center', gap: 3 },
   statCard: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: C.card,
     borderWidth: 1.5,
     borderColor: C.border,
     borderRadius: 14,
@@ -887,16 +880,16 @@ const s = StyleSheet.create({
   },
 
   statLabel: { fontSize: 9, color: C.muted, marginTop: 1 },
-  tabsRow: { flexDirection: 'row', backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 14, marginBottom: 14, padding: 4 },
+  tabsRow: { flexDirection: 'row', backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 14, marginBottom: 14, padding: 4 },
   tab: { flex: 1, flexDirection: 'row', paddingVertical: 8, alignItems: 'center', justifyContent: 'center', gap: 5, borderRadius: 10 },
   tabActive: { backgroundColor: C.accent + '12' },
   tabText: { fontSize: 11, color: C.muted, fontWeight: '600' },
-  infoCard: { backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 16, marginBottom: 14, overflow: 'hidden' },
+  infoCard: { backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 16, marginBottom: 14, overflow: 'hidden' },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
   infoIconWrap: { width: 30, height: 30, borderRadius: 8, backgroundColor: C.accent + '10', alignItems: 'center', justifyContent: 'center' },
   infoText: { fontSize: 13, color: C.dark, flex: 1 },
   divider: { height: 1, backgroundColor: C.border, marginHorizontal: 14 },
-  menuCard: { backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 16, marginBottom: 14, overflow: 'hidden' },
+  menuCard: { backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 16, marginBottom: 14, overflow: 'hidden' },
   menuItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14, gap: 10 },
   menuItemBorder: { borderBottomWidth: 1, borderBottomColor: C.border },
   menuIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
@@ -912,10 +905,10 @@ const s = StyleSheet.create({
   menuPrice: { fontSize: 13, fontWeight: '800' },
   popularBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: '#FFF3E0', borderRadius: 6, paddingHorizontal: 5, paddingVertical: 1 },
   popularText: { fontSize: 8, fontWeight: '800', color: '#E65100' },
-  ratingBox: { flexDirection: 'row', alignItems: 'center', gap: 16, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 16, padding: 16, marginBottom: 12 },
+  ratingBox: { flexDirection: 'row', alignItems: 'center', gap: 16, backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 16, padding: 16, marginBottom: 12 },
   bigRating: { fontSize: 40, fontWeight: '900', color: C.dark },
   reviewCount: { fontSize: 10, color: C.muted, marginTop: 2 },
-  reviewCard: { backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 16, padding: 14, marginBottom: 2 },
+  reviewCard: { backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 16, padding: 14, marginBottom: 2 },
   reviewAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.border, alignItems: 'center', justifyContent: 'center' },
   reviewName: { fontSize: 13, fontWeight: '700', color: C.dark },
   reviewDate: { fontSize: 9, color: C.muted },
@@ -924,14 +917,14 @@ const s = StyleSheet.create({
   aiIconWrap: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' },
   aiTitle: { fontSize: 13, fontWeight: '700', color: C.dark, marginBottom: 2 },
   aiSub: { fontSize: 11, color: C.muted },
-  bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', gap: 10, padding: 16, paddingBottom: 28, backgroundColor: 'rgba(253,248,242,0.98)', borderTopWidth: 1, borderTopColor: C.border },
+  bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', gap: 10, padding: 16, paddingBottom: 28, backgroundColor: C.overlay, borderTopWidth: 1, borderTopColor: C.border },
   btnPrimary: { flex: 1, flexDirection: 'row', borderRadius: 16, paddingVertical: 15, alignItems: 'center', justifyContent: 'center' },
   btnPrimaryText: { color: '#fff', fontSize: 14, fontWeight: '800' },
-  btnIcon: { width: 50, height: 50, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  btnIcon: { width: 50, height: 50, backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   backLink: { marginTop: 16, padding: 12 },
 
   reviewForm: {
-    backgroundColor: '#fff',
+    backgroundColor: C.card,
     borderWidth: 1.5,
     borderColor: C.border,
     borderRadius: 16,

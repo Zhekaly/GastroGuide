@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
@@ -32,20 +32,11 @@ import {
 } from '../../services/ai';
 import { getOffers, Offer } from '../../services/offers';
 import * as Location from 'expo-location';
+import { AppThemeColors, useAppTheme } from '@/lib/theme';
 
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const DRAWER_W = SCREEN_W * 0.78;
-
-const C = {
-  bg: '#FDF8F2', dark: '#1A1208', accent: '#E8420A',
-  muted: '#8C7B6B', border: '#EDE5D8', green: '#2E7D32', card: '#FFFFFF',
-  drawerBg: '#1A1208',
-  drawerCard: '#2A1F12',
-  drawerBorder: '#3A2E1E',
-  drawerMuted: '#8C7B6B',
-  drawerAccent: '#E8420A',
-};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -131,6 +122,8 @@ const QUICK = [
 // ─── BoldText ─────────────────────────────────────────────────────────────────
 
 function BoldText({ text, isUser }: { text: string; isUser: boolean }) {
+  const { colors: C } = useAppTheme();
+  const ch = useMemo(() => createChatStyles(C), [C]);
   const parts = text.split(/\*\*(.*?)\*\*/g);
   return (
     <Text style={[ch.msgText, isUser ? ch.msgUser : ch.msgAI]}>
@@ -146,6 +139,8 @@ function BoldText({ text, isUser }: { text: string; isUser: boolean }) {
 // ─── RestaurantCard ───────────────────────────────────────────────────────────
 
 function RestaurantCardItem({ card }: { card: RestaurantCardType }) {
+  const { colors: C } = useAppTheme();
+  const rc = useMemo(() => createRestaurantCardStyles(C), [C]);
   const [imgError, setImgError] = useState(false);
   const showPlaceholder = !card.photo || imgError;
 
@@ -215,6 +210,7 @@ function RestaurantCardItem({ card }: { card: RestaurantCardType }) {
 // ─── TypingDots ───────────────────────────────────────────────────────────────
 
 function TypingDots() {
+  const { colors: C } = useAppTheme();
   const a1 = useRef(new Animated.Value(0)).current;
   const a2 = useRef(new Animated.Value(0)).current;
   const a3 = useRef(new Animated.Value(0)).current;
@@ -271,6 +267,9 @@ function Drawer({
   insets: ReturnType<typeof useSafeAreaInsets>;
 }) {
   // Группировка по дате
+  const { colors: C } = useAppTheme();
+  const ch = useMemo(() => createChatStyles(C), [C]);
+
   const grouped = sessions.reduce<Record<string, Session[]>>((acc, s) => {
     const key = s.date;
     if (!acc[key]) acc[key] = [];
@@ -424,6 +423,8 @@ function isAuthError(err: unknown) {
 }
 
 export default function AIScreen() {
+  const { colors: C, isDark } = useAppTheme();
+  const ch = useMemo(() => createChatStyles(C), [C]);
   const insets = useSafeAreaInsets();
 
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -792,7 +793,7 @@ export default function AIScreen() {
   return (
     <View style={ch.root}>
       <SafeAreaView style={ch.root}>
-        <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
 
         {/* ── HEADER ── */}
         <View style={[ch.header, { paddingTop: insets.top + 12 }]}>
@@ -968,7 +969,7 @@ export default function AIScreen() {
 
 // ─── STYLES ───────────────────────────────────────────────────────────────────
 
-const ch = StyleSheet.create({
+const createChatStyles = (C: AppThemeColors) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
 
   // Header
@@ -1164,10 +1165,10 @@ const ch = StyleSheet.create({
 
 // ─── RestaurantCard styles ─────────────────────────────────────────────────────
 
-const rc = StyleSheet.create({
+const createRestaurantCardStyles = (C: AppThemeColors) => StyleSheet.create({
   card: {
     width: 180,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: C.card,
     borderRadius: 16,
     borderWidth: 1.5,
     borderColor: '#EDE5D8',
