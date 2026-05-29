@@ -4,7 +4,7 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
@@ -73,8 +73,8 @@ function getInitialScreen(value: string | string[] | undefined): Screen {
 
 export default function OnboardingScreen() {
   const [idx, setIdx] = useState(0);
-  const params = useLocalSearchParams<{ screen?: string | string[] }>();
-  const [screen, setScreen] = useState<Screen>(() => getInitialScreen(params.screen));
+  const params = useLocalSearchParams<{ initialScreen?: string | string[] }>();
+  const [screen, setScreen] = useState<Screen>(() => getInitialScreen(params.initialScreen));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -86,6 +86,14 @@ export default function OnboardingScreen() {
   const contentX = useRef(new Animated.Value(0)).current;
   const screenOpacity = useRef(new Animated.Value(1)).current;
   const screenY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const nextScreen = getInitialScreen(params.initialScreen);
+
+    if (nextScreen !== 'slides') {
+      setScreen(nextScreen);
+    }
+  }, [params.initialScreen]);
 
   const goToMain = async () => {
     await AsyncStorage.setItem('onboarded', '1');
