@@ -340,7 +340,7 @@ const createStyles = (C: AppThemeColors) => StyleSheet.create({
   sortRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   sortChips: { flexDirection: 'row', gap: 6 },
   sortChip: { paddingHorizontal: 10, paddingVertical: 5, backgroundColor: C.card, borderWidth: 1, borderColor: C.border, borderRadius: 20 },
-  sortChipActive: { backgroundColor: C.dark, borderColor: C.dark },
+  sortChipActive: { backgroundColor: C.accent, borderColor: C.accent },
   sortText: { fontSize: 10, color: C.muted, fontWeight: '600' },
   sortTextActive: { color: '#fff' },
   openToggle: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1, borderColor: C.border, borderRadius: 20 },
