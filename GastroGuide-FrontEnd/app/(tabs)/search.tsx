@@ -18,6 +18,7 @@ import * as Location from 'expo-location';
 import { getRestaurantImageSource } from '../../utils/restaurantImages';
 import { parseDistanceToMeters } from '../../utils/format';
 import { Image } from 'expo-image';
+import { AppThemeColors, useAppTheme } from '@/lib/theme';
 
 
 const CATEGORY_ICONS: Record<string, React.ComponentProps<typeof Ionicons>['name']> = {
@@ -36,14 +37,11 @@ function getCategoryIcon(label: string): React.ComponentProps<typeof Ionicons>['
   return CATEGORY_ICONS[label] ?? 'restaurant-outline';
 }
 
-const C = {
-  bg: '#FDF8F2', dark: '#1A1208', accent: '#E8420A',
-  muted: '#8C7B6B', border: '#EDE5D8', green: '#2E7D32', red: '#D32F2F',
-};
-
 const SORT_OPTIONS = ['По рейтингу', 'По расстоянию', 'По цене'];
 
 export default function SearchScreen() {
+  const { colors: C, isDark } = useAppTheme();
+  const s = useMemo(() => createStyles(C), [C]);
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [sort, setSort] = useState('По рейтингу');
@@ -161,7 +159,7 @@ export default function SearchScreen() {
   if (loading && restaurants.length === 0) {
     return (
       <SafeAreaView style={s.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ fontSize: 16, color: C.dark, fontWeight: '700' }}>Загрузка...</Text>
         </View>
@@ -172,7 +170,7 @@ export default function SearchScreen() {
   if (error && restaurants.length === 0) {
     return (
       <SafeAreaView style={s.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
           <Text style={{ fontSize: 16, color: C.red, fontWeight: '700', textAlign: 'center' }}>{error}</Text>
         </View>
@@ -182,7 +180,7 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView style={s.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
 
       <View style={[s.header, { paddingTop: insets.top + 12 }]}>
         <Text style={s.title}>Поиск</Text>
@@ -326,22 +324,22 @@ export default function SearchScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const createStyles = (C: AppThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   header: {
     paddingHorizontal: 20, paddingBottom: 8,
     borderBottomWidth: 1, borderBottomColor: C.border,
   },
   title: { fontSize: 22, fontWeight: '900', color: C.dark, marginBottom: 12 },
-  searchBar: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 11, marginBottom: 12 },
+  searchBar: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 11, marginBottom: 12 },
   searchInput: { flex: 1, fontSize: 13, color: C.dark },
   catsRow: { gap: 8, paddingRight: 8, marginBottom: 10 },
-  catChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 999 },
+  catChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 999 },
   catChipActive: { backgroundColor: C.accent, borderColor: C.accent },
   catText: { fontSize: 11, fontWeight: '600', color: C.dark },
   sortRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   sortChips: { flexDirection: 'row', gap: 6 },
-  sortChip: { paddingHorizontal: 10, paddingVertical: 5, backgroundColor: '#fff', borderWidth: 1, borderColor: C.border, borderRadius: 20 },
+  sortChip: { paddingHorizontal: 10, paddingVertical: 5, backgroundColor: C.card, borderWidth: 1, borderColor: C.border, borderRadius: 20 },
   sortChipActive: { backgroundColor: C.dark, borderColor: C.dark },
   sortText: { fontSize: 10, color: C.muted, fontWeight: '600' },
   sortTextActive: { color: '#fff' },
@@ -350,7 +348,7 @@ const s = StyleSheet.create({
   openToggleText: { fontSize: 10, color: C.muted, fontWeight: '600' },
   list: { padding: 20, gap: 8, paddingBottom: 100 },
   resultCount: { fontSize: 10, color: C.muted, fontWeight: '600', letterSpacing: 1, marginBottom: 10 },
-  card: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, padding: 13, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 16, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
+  card: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, padding: 13, backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 16, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
   cardImage: { width: 52, height: 52, borderRadius: 15, flexShrink: 0 },
   cardName: { fontSize: 14, fontWeight: '700', color: C.dark, flex: 1, marginRight: 8 },
   cardSub: { fontSize: 11, color: C.muted, marginTop: 2 },

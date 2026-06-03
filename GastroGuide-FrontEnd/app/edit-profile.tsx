@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   SafeAreaView,
@@ -12,17 +12,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getProfileMe, updateProfile, changePassword } from '../services/profile';
-
-const C = {
-  bg: '#FDF8F2',
-  dark: '#1A1208',
-  accent: '#E8420A',
-  muted: '#8C7B6B',
-  border: '#EDE5D8',
-};
+import { AppThemeColors, useAppTheme } from '@/lib/theme';
 
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
+  const { colors: C, isDark } = useAppTheme();
+  const s = useMemo(() => createStyles(C), [C]);
 
   const [name, setName] = useState('');
   const [city, setCity] = useState('');
@@ -113,7 +108,7 @@ export default function EditProfileScreen() {
 
   return (
     <SafeAreaView style={s.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
       <View style={[s.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={s.back}>← Назад</Text>
@@ -180,7 +175,7 @@ export default function EditProfileScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const createStyles = (C: AppThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
 
   header: {
@@ -213,7 +208,7 @@ const s = StyleSheet.create({
   },
 
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: C.card,
     borderWidth: 1.5,
     borderColor: C.border,
     borderRadius: 14,

@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import * as Location from 'expo-location';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   // Image,
   SafeAreaView,
@@ -19,11 +19,7 @@ import { getOffers, Offer } from '../../services/offers';
 import { getRestaurantImageSource } from '../../utils/restaurantImages';
 import { parseDistanceToMeters } from '@/utils/format';
 import { Image } from 'expo-image';
-
-const C = {
-  bg: '#FDF8F2', dark: '#1A1208', accent: '#E8420A',
-  muted: '#8C7B6B', border: '#EDE5D8', green: '#2E7D32',
-};
+import { AppThemeColors, useAppTheme } from '@/lib/theme';
 
 // Маппинг категорий на иконки Ionicons
 const CATEGORY_ICONS: Record<string, React.ComponentProps<typeof Ionicons>['name']> = {
@@ -44,6 +40,8 @@ function getCategoryIcon(label: string): React.ComponentProps<typeof Ionicons>['
 }
 
 export default function HomeScreen() {
+  const { colors: C, isDark } = useAppTheme();
+  const s = useMemo(() => createStyles(C), [C]);
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -141,7 +139,7 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <SafeAreaView style={s.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ color: C.dark, fontSize: 16, fontWeight: '700' }}>Загрузка...</Text>
         </View>
@@ -152,7 +150,7 @@ export default function HomeScreen() {
   if (error) {
     return (
       <SafeAreaView style={s.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
           <Text style={{ color: '#D32F2F', fontSize: 16, fontWeight: '700', textAlign: 'center' }}>{error}</Text>
         </View>
@@ -164,7 +162,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={s.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
 
@@ -399,7 +397,7 @@ export default function HomeScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const createStyles = (C: AppThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -409,7 +407,7 @@ const s = StyleSheet.create({
   subtitle: { fontSize: 12, color: C.muted, marginTop: 2 },
   profileBtn: {
     width: 42, height: 42, borderRadius: 21,
-    backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border,
+    backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border,
     alignItems: 'center', justifyContent: 'center', marginTop: 4,
     shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
@@ -429,7 +427,7 @@ const s = StyleSheet.create({
   aiSub: { fontSize: 11, color: C.muted },
   statsBar: {
     flexDirection: 'row', marginHorizontal: 20, marginBottom: 20,
-    backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border,
+    backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border,
     borderRadius: 16, paddingVertical: 12,
   },
   statItem: { flex: 1, alignItems: 'center' },
@@ -452,12 +450,12 @@ const s = StyleSheet.create({
   catChip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     paddingHorizontal: 12, paddingVertical: 7,
-    backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border, borderRadius: 999,
+    backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border, borderRadius: 999,
   },
   catChipActive: { backgroundColor: C.accent, borderColor: C.accent },
   catText: { fontSize: 11, fontWeight: '600', color: C.dark },
   featCard: {
-    width: 140, backgroundColor: '#fff',
+    width: 140, backgroundColor: C.card,
     borderWidth: 1.5, borderColor: C.border, borderRadius: 18, padding: 12,
   },
   featImage: { width: '100%', height: 80, borderRadius: 12, marginBottom: 8 },
@@ -470,7 +468,7 @@ const s = StyleSheet.create({
   featOpen: { fontSize: 10, fontWeight: '600' },
   card: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 12, padding: 13,
-    backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.border,
+    backgroundColor: C.card, borderWidth: 1.5, borderColor: C.border,
     borderRadius: 16, marginBottom: 8,
   },
   cardImage: { width: 52, height: 52, borderRadius: 15, flexShrink: 0 },

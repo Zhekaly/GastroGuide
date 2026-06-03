@@ -3,8 +3,9 @@
 // ═══════════════════════════════════════════════════
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppThemeColors, useAppTheme } from '@/lib/theme';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
@@ -18,11 +19,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authService } from '@/services/auth';
-
-const C = {
-  bg: '#FDF8F2', dark: '#1A1208', accent: '#E8420A',
-  muted: '#8C7B6B', border: '#EDE5D8', card: '#FFFFFF',
-};
 
 const SLIDES = [
   {
@@ -75,6 +71,8 @@ export default function OnboardingScreen() {
   const [idx, setIdx] = useState(0);
   const params = useLocalSearchParams<{ initialScreen?: string | string[] }>();
   const [screen, setScreen] = useState<Screen>(() => getInitialScreen(params.initialScreen));
+  const { colors: C, isDark } = useAppTheme();
+  const s = useMemo(() => createStyles(C), [C]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -187,8 +185,8 @@ export default function OnboardingScreen() {
   // ── ЭКРАН СЛАЙДОВ ──────────────────────────────────────────────────────────
   if (screen === 'slides') {
     return (
-      <SafeAreaView style={[s.root, { backgroundColor: cur.bg }]}>
-        <StatusBar barStyle="dark-content" />
+      <SafeAreaView style={[s.root, { backgroundColor: isDark ? C.bg : cur.bg }]}>
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
         <View style={[s.topBar, { paddingTop: insets.top + 12 }]}>
           <View style={[s.pill, { borderColor: cur.accent + '50' }]}>
@@ -252,7 +250,7 @@ export default function OnboardingScreen() {
   if (screen === 'auth') {
     return (
       <SafeAreaView style={s.root}>
-        <StatusBar barStyle="dark-content" />
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
         <Animated.View style={[s.wrap, { paddingTop: insets.top + 20, opacity: screenOpacity, transform: [{ translateY: screenY }] }]}>
           <View style={s.authTop}>
             <View style={s.logo}>
@@ -294,7 +292,7 @@ export default function OnboardingScreen() {
   const isLogin = screen === 'login';
   return (
     <SafeAreaView style={s.root}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Animated.View style={[s.wrap, { paddingTop: insets.top + 20, opacity: screenOpacity, transform: [{ translateY: screenY }] }]}>
           <TouchableOpacity onPress={() => switchScreen('auth')} style={s.back}>
@@ -375,7 +373,7 @@ export default function OnboardingScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const createStyles = (C: AppThemeColors) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 12 },
   pill: { borderWidth: 1.5, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },

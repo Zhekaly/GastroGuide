@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════
 //  app/_layout.tsx  ← КОРНЕВОЙ (не внутри (tabs)!)
 // ═══════════════════════════════════════════════════
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AppThemeProvider, useAppTheme } from '@/lib/theme';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -13,10 +13,41 @@ export const unstable_settings = {
 };
  
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
- 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <AppThemeProvider>
+      <RootNavigator />
+    </AppThemeProvider>
+  );
+}
+
+function RootNavigator() {
+  const { colors, isDark } = useAppTheme();
+  const navigationTheme = isDark
+    ? {
+        ...DarkTheme,
+        colors: {
+          ...DarkTheme.colors,
+          primary: colors.accent,
+          background: colors.bg,
+          card: colors.card,
+          text: colors.dark,
+          border: colors.border,
+        },
+      }
+    : {
+        ...DefaultTheme,
+        colors: {
+          ...DefaultTheme.colors,
+          primary: colors.accent,
+          background: colors.bg,
+          card: colors.card,
+          text: colors.dark,
+          border: colors.border,
+        },
+      };
+
+  return (
+    <ThemeProvider value={navigationTheme}>
       <Stack
         screenOptions={{
           headerShown: false, // скрываем хедер у ВСЕХ экранов
@@ -27,7 +58,7 @@ export default function RootLayout() {
         <Stack.Screen name="detail" />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
     </ThemeProvider>
   );
 }
